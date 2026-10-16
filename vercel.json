@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/sync/batch.ts": {
+      "maxDuration": 60
+    },
+    "api/sync/start.ts": {
+      "maxDuration": 60
+    },
+    "api/analysis/run.ts": {
+      "maxDuration": 60
+    },
+    "api/covers/backfill.ts": {
+      "maxDuration": 60
+    }
+  }
+}
