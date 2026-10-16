@@ -159,17 +159,19 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center justify-between gap-3 text-sm">
             {exportedAt && (
               <span className="hidden text-ink-muted md:inline">
                 数据导出于 {exportedAt}
               </span>
             )}
-            <span className="text-ink-muted">{session.user.email}</span>
+            <span className="min-w-0 truncate text-[13px] text-ink-muted">
+              {session.user.email}
+            </span>
             <button
               type="button"
               onClick={() => void supabase?.auth.signOut()}
-              className="rounded-lg border border-ink-line px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-ink-faint hover:text-ink-txt"
+              className="shrink-0 rounded-lg border border-ink-line px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink-txt sm:text-sm"
             >
               退出登录
             </button>
@@ -179,13 +181,13 @@ export default function App() {
 
       {/* Tabs */}
       <div className="mx-auto max-w-6xl px-5 pt-6">
-        <div className="inline-flex rounded-xl border border-ink-line bg-ink-panel p-1">
+        <div className="flex overflow-x-auto rounded-xl border border-ink-line bg-ink-panel p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => gotoTab(t.key)}
-              className={`rounded-lg px-6 py-2 text-sm transition-colors ${
+              className={`flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] transition-colors sm:px-6 sm:text-sm ${
                 tab === t.key
                   ? 'bg-ink-panel2 text-ink-txt'
                   : 'text-ink-muted hover:text-ink-txt'

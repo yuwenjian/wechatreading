@@ -1,5 +1,6 @@
 import type { BookRow, StatsPayload } from '../lib/types'
 import { formatHoursCN } from '../lib/format'
+import StatNumber from '../components/StatNumber'
 
 interface Props {
   books: BookRow[]
@@ -52,11 +53,9 @@ export default function Stats({ books, stats }: Props) {
         {cards.map((s) => (
           <div
             key={s.l}
-            className="rounded-xl border border-ink-line bg-ink-panel px-[18px] py-4"
+            className="rounded-xl border border-ink-line bg-ink-panel px-4 py-3.5 sm:px-[18px] sm:py-4"
           >
-            <div className={`text-[26px] font-semibold leading-snug ${s.c}`}>
-              {s.n}
-            </div>
+            <StatNumber text={s.n} className={s.c} />
             <div className="mt-0.5 text-xs text-ink-muted">{s.l}</div>
           </div>
         ))}

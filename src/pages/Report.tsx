@@ -10,6 +10,7 @@ import type {
   ReviewRow,
 } from '../lib/types'
 import { formatDate, formatDateTime, formatHoursCN } from '../lib/format'
+import StatNumber from '../components/StatNumber'
 
 /**
  * 阅读报告页：按周/月复盘「读了哪些书、留了哪些笔记」，并可生成 AI 报告。
@@ -265,9 +266,9 @@ export default function Report({ books, highlights, reviews }: Props) {
       {/* KPI */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map((s) => (
-          <div key={s.label} className="rounded-xl border border-ink-line bg-ink-panel px-5 py-4">
-            <div className={`text-3xl font-semibold tracking-tight ${s.tw}`}>{s.value}</div>
-            <div className="mt-1.5 text-sm text-ink-muted">{s.label}</div>
+          <div key={s.label} className="rounded-xl border border-ink-line bg-ink-panel px-4 py-3.5 sm:px-5 sm:py-4">
+            <StatNumber text={s.value} className={s.tw} />
+            <div className="mt-1.5 text-[13px] text-ink-muted sm:text-sm">{s.label}</div>
           </div>
         ))}
       </div>

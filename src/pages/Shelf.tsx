@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import StatNumber from '../components/StatNumber'
 import type { BookRow, HighlightRow, ReviewRow } from '../lib/types'
 import {
   formatHoursCN,
@@ -97,12 +98,10 @@ export default function Shelf({ books, highlights, reviews }: Props) {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-xl border border-ink-line bg-ink-panel px-5 py-4"
+            className="rounded-xl border border-ink-line bg-ink-panel px-4 py-3.5 sm:px-5 sm:py-4"
           >
-            <div className={`text-3xl font-semibold tracking-tight ${s.tw}`}>
-              {s.value}
-            </div>
-            <div className="mt-1.5 text-sm text-ink-muted">{s.label}</div>
+            <StatNumber text={s.value} className={s.tw} />
+            <div className="mt-1.5 text-[13px] text-ink-muted sm:text-sm">{s.label}</div>
           </div>
         ))}
       </div>
