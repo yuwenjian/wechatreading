@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { admin } from "./supabaseAdmin";
-import { fail } from "./http";
+import { describeError, fail } from "./http";
 
 export type AuthedUser = { id: string; email?: string };
 
@@ -24,17 +24,34 @@ export async function requireUser(
     return null;
   }
 
-  const { data, error } = await admin().auth.getUser(token);
-  if (error || !data?.user) {
+  // admin() 在缺环境变量时会抛错。它若在 try 之外崩溃，Vercel 只会给
+  // FUNCTION_INVOCATION_FAILED（完全看不出原因），所以这里必须兜住
+  type GetUserResult = {
+    data: { user: { id: string; email?: string } | null };
+    error: { message: string } | null;
+  };
+
+  let result: GetUserResult;
+  try {
+    result = (await admin().auth.getUser(token)) as GetUserResult;
+  } catch (e) {
+    console.error("[auth] 身份校验异常", describeError(e));
+    fail(res, 500, `身份校验失败：${describeError(e)}`);
+    return null;
+  }
+
+  if (result.error || !result.data?.user) {
     fail(res, 401, "登录状态已失效，请重新登录");
     return null;
   }
 
+  const user = result.data.user;
+
   const allowed = (process.env.ALLOWED_USER_ID ?? "").trim();
-  if (allowed && data.user.id !== allowed) {
+  if (allowed && user.id !== allowed) {
     fail(res, 403, "当前账号无权访问该数据");
     return null;
   }
 
-  return { id: data.user.id, email: data.user.email ?? undefined };
+  return { id: user.id, email: user.email ?? undefined };
 }
