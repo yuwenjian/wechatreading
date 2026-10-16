@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireUser } from "../_lib/auth";
-import { describeError, fail, json } from "../_lib/http";
-import { analyzeBook, analyzableBookIds, analysisCandidates } from "../_lib/analysis";
-import { llmConfig } from "../_lib/llm";
+import { requireUser } from "../_lib/auth.js";
+import { describeError, fail, json } from "../_lib/http.js";
+import { analyzeBook, analyzableBookIds, analysisCandidates } from "../_lib/analysis.js";
+import { llmConfig } from "../_lib/llm.js";
 
 /**
  * POST /api/analysis/run

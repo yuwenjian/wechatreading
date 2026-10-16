@@ -12,7 +12,7 @@
  * 封面拉不到不该连带整本书的划线同步一起失败。
  */
 
-import { admin } from "./supabaseAdmin";
+import { admin } from "./supabaseAdmin.js";
 
 const BUCKET = "wr-covers";
 const FETCH_TIMEOUT_MS = 10_000;

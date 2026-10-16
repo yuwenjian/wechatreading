@@ -11,16 +11,16 @@
  * 从而自然获得重试机会 —— 这正是把计数当作判据的前提。
  */
 
-import { admin } from "./supabaseAdmin";
-import { describeError } from "./http";
-import { isMirrored, mirrorCover } from "./covers";
+import { admin } from "./supabaseAdmin.js";
+import { describeError } from "./http.js";
+import { isMirrored, mirrorCover } from "./covers.js";
 import {
   fetchBookDetail,
   fetchReadStats,
   listNotebooks,
   type Chapter,
   type NotebookBook,
-} from "./weread";
+} from "./weread.js";
 
 type Json = Record<string, any>;
 

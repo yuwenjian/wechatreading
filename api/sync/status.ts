@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireUser } from "../_lib/auth";
-import { admin } from "../_lib/supabaseAdmin";
-import { describeError, fail, json } from "../_lib/http";
+import { requireUser } from "../_lib/auth.js";
+import { admin } from "../_lib/supabaseAdmin.js";
+import { describeError, fail, json } from "../_lib/http.js";
 
 /**
  * GET /api/sync/status

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { admin } from "./supabaseAdmin";
-import { describeError, fail } from "./http";
+import { admin } from "./supabaseAdmin.js";
+import { describeError, fail } from "./http.js";
 
 export type AuthedUser = { id: string; email?: string };
 

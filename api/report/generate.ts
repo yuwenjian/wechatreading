@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireUser } from "../_lib/auth";
-import { describeError, fail, json } from "../_lib/http";
-import { llmConfig } from "../_lib/llm";
-import { generateReport, type PeriodType } from "../_lib/report";
+import { requireUser } from "../_lib/auth.js";
+import { describeError, fail, json } from "../_lib/http.js";
+import { llmConfig } from "../_lib/llm.js";
+import { generateReport, type PeriodType } from "../_lib/report.js";
 
 /**
  * POST /api/report/generate

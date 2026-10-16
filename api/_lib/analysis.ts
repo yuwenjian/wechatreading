@@ -12,8 +12,8 @@
  *      下次还会被选中（自然重试）。
  */
 
-import { admin } from "./supabaseAdmin";
-import { chatJSON, llmConfig, type ChatMessage } from "./llm";
+import { admin } from "./supabaseAdmin.js";
+import { chatJSON, llmConfig, type ChatMessage } from "./llm.js";
 
 type Json = Record<string, any>;
 

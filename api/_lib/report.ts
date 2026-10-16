@@ -13,8 +13,8 @@
  *   （Vercel 函数跑在 UTC，自己算周一会偏 8 小时）。
  */
 
-import { admin } from "./supabaseAdmin";
-import { chatJSON, llmConfig } from "./llm";
+import { admin } from "./supabaseAdmin.js";
+import { chatJSON, llmConfig } from "./llm.js";
 
 type Json = Record<string, any>;
 
