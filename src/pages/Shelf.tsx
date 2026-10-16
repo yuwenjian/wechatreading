@@ -7,6 +7,7 @@ import {
   groupCategory,
   groupNumber,
 } from '../lib/format'
+import { IconClock, IconIdea, IconQuote, IconStar } from '../components/icons'
 
 interface Props {
   books: BookRow[]
@@ -23,12 +24,12 @@ interface ShelfItem {
 
 const GROUPS = ['全部', '其他', '文学小说', '认知成长与管理', '金融理财'] as const
 
-// 卡片主色，跟参考页一致
+/** 卡片强调色：轮换分配，保证网格里不单调 */
 const ACCENTS = [
-  { css: '#6aa6e8', tw: 'text-brand-blue' },
-  { css: '#4fc4a0', tw: 'text-brand-teal' },
-  { css: '#e0a64e', tw: 'text-brand-amber' },
-  { css: '#a78be0', tw: 'text-brand-purple' },
+  { css: '#6fa9fa', tw: 'text-brand-blue', soft: 'bg-brand-blue/[0.12]' },
+  { css: '#2dd4bf', tw: 'text-brand-teal', soft: 'bg-brand-teal/[0.12]' },
+  { css: '#f0b45f', tw: 'text-brand-amber', soft: 'bg-brand-amber/[0.12]' },
+  { css: '#b69bff', tw: 'text-brand-purple', soft: 'bg-brand-purple/[0.12]' },
 ]
 
 export default function Shelf({ books, highlights, reviews }: Props) {
@@ -92,22 +93,19 @@ export default function Shelf({ books, highlights, reviews }: Props) {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* 顶部四格统计 */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl border border-ink-line bg-ink-panel px-4 py-3.5 sm:px-5 sm:py-4"
-          >
+          <div key={s.label} className="stat-card">
             <StatNumber text={s.value} className={s.tw} />
-            <div className="mt-1.5 text-[13px] text-ink-muted sm:text-sm">{s.label}</div>
+            <div className="mt-2 text-[12.5px] text-ink-muted sm:text-[13px]">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* 分类筛选 */}
-      <div className="flex flex-wrap gap-2.5">
+      {/* 分类筛选：移动端横向滑动，PC 自动换行 */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0">
         {GROUPS.map((g) => {
           const n = g === '全部' ? items.length : (counts.get(g) ?? 0)
           const isOn = active === g
@@ -116,20 +114,20 @@ export default function Shelf({ books, highlights, reviews }: Props) {
               key={g}
               type="button"
               onClick={() => setActive(g)}
-              className={`h-9 rounded-full border px-4 text-sm transition-colors ${
-                isOn
-                  ? 'border-brand-blue bg-brand-blue/15 text-brand-blue'
-                  : 'border-ink-line bg-ink-panel text-ink-muted hover:border-ink-faint hover:text-ink-txt'
-              }`}
+              aria-pressed={isOn}
+              className={`${isOn ? 'chip chip-on' : 'chip chip-off'} shrink-0`}
             >
-              {g} {n}
+              {g}
+              <span className={`tabular-nums text-[11.5px] ${isOn ? 'opacity-80' : 'text-ink-faint'}`}>
+                {n}
+              </span>
             </button>
           )
         })}
       </div>
 
       {/* 书籍卡片 */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
         {list.map((it, idx) => (
           <BookCard
             key={it.book.book_id}
@@ -139,11 +137,7 @@ export default function Shelf({ books, highlights, reviews }: Props) {
         ))}
       </div>
 
-      {list.length === 0 && (
-        <div className="rounded-xl border border-dashed border-ink-line bg-ink-panel p-10 text-center text-ink-muted">
-          这个分类下还没有带笔记的书
-        </div>
-      )}
+      {list.length === 0 && <div className="empty">这个分类下还没有带笔记的书</div>}
     </div>
   )
 }
@@ -164,83 +158,88 @@ function BookCard({
   }
 
   return (
-    <div
+    <article
       role="link"
       tabIndex={0}
       onClick={goDetail}
       onKeyDown={(e) => e.key === 'Enter' && goDetail()}
-      className="group flex cursor-pointer flex-col rounded-xl border border-ink-line bg-ink-panel p-4 transition-colors hover:border-ink-faint"
-      style={{ borderTop: `3px solid ${accent.css}` }}
+      className="group flex cursor-pointer gap-3.5 rounded-card border border-ink-line bg-ink-surface p-3.5 shadow-card transition-[transform,border-color,box-shadow] duration-200 ease-app active:scale-[.985] hover:border-ink-line2 hover:shadow-pop sm:p-4"
     >
-      <div className="flex gap-3.5">
+      {/* 封面 */}
+      <div className="relative shrink-0">
         {book.cover_url ? (
           <img
             src={book.cover_url}
             alt=""
             loading="lazy"
-            className="h-24 w-[72px] shrink-0 rounded-md object-cover"
+            className="h-[92px] w-[68px] rounded-[10px] border border-ink-line object-cover"
           />
         ) : (
-          <div className="flex h-24 w-[72px] shrink-0 items-center justify-center rounded-md bg-ink-panel2 text-xs text-ink-faint">
+          <div className="flex h-[92px] w-[68px] items-center justify-center rounded-[10px] border border-ink-line bg-ink-surface2 text-[11px] text-ink-faint">
             无封面
           </div>
         )}
+        {pct >= 100 && (
+          <span className="absolute -right-1.5 -top-1.5 rounded-full bg-brand-teal px-1.5 py-[2px] text-[10px] font-medium text-[#06231d]">
+            读完
+          </span>
+        )}
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold text-ink-txt">
-            {book.title}
-          </div>
-          <div className="mt-0.5 truncate text-xs text-ink-muted">
-            {[book.author, book.translator].filter(Boolean).join(' · ')}
-          </div>
-          <div className="mt-2 text-xs text-ink-muted">
-            划线 <span className={accent.tw}>{marks.length}</span>{' '}
-            <span className="mx-1 text-ink-faint">想法</span>{' '}
-            <span className={accent.tw}>{thoughts.length}</span>
-          </div>
-          <div className="mt-1 flex items-center gap-2 text-xs text-ink-muted">
-            <svg
-              className="h-3.5 w-3.5 text-brand-amber"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
-            </svg>
-            {formatHoursCN(book.reading_time)}
-          </div>
+      {/* 信息 */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug">{book.title}</h3>
+        <p className="mt-0.5 truncate text-[12.5px] text-ink-muted">
+          {[book.author, book.translator].filter(Boolean).join(' · ') || '—'}
+        </p>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+          <span className="inline-flex items-center gap-1 text-ink-muted">
+            <IconQuote className={`h-3.5 w-3.5 ${accent.tw}`} />
+            <span className={`font-medium tabular-nums ${accent.tw}`}>{marks.length}</span>
+            划线
+          </span>
+          <span className="inline-flex items-center gap-1 text-ink-muted">
+            <IconIdea className="h-3.5 w-3.5 text-brand-purple" />
+            <span className="font-medium tabular-nums text-brand-purple">{thoughts.length}</span>
+            想法
+          </span>
+          <span className="inline-flex items-center gap-1 text-ink-muted">
+            <IconClock className="h-3.5 w-3.5 text-brand-teal" />
+            <span className="tabular-nums">{formatHoursCN(book.reading_time)}</span>
+          </span>
           {rating && (
-            <div className="mt-1 flex items-center gap-1 text-xs text-ink-muted">
-              <svg
-                className="h-3.5 w-3.5 text-brand-amber"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
-              </svg>
-              <span className={accent.tw}>{rating}</span> 分
-            </div>
+            <span className="inline-flex items-center gap-1 text-ink-muted">
+              <IconStar className="h-3.5 w-3.5 text-brand-amber" />
+              <span className="tabular-nums">{rating}</span>
+            </span>
           )}
         </div>
-      </div>
 
-      {/* 阅读进度条 */}
-      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-ink-line">
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, backgroundColor: accent.css }}
-        />
+        {/* 进度 */}
+        <div className="mt-auto pt-3">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-surface2">
+              <div
+                className="h-full rounded-full transition-[width] duration-300 ease-app"
+                style={{
+                  width: `${pct}%`,
+                  background: `linear-gradient(90deg, ${accent.css}99, ${accent.css})`,
+                }}
+              />
+            </div>
+            <span className="shrink-0 text-[11.5px] tabular-nums text-ink-faint">{pct}%</span>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[11.5px]">
+            <span className={`rounded-md px-1.5 py-0.5 ${accent.soft} ${accent.tw}`}>{group}</span>
+            {(marks.length > 0 || thoughts.length > 0) && (
+              <span className="text-ink-faint transition-colors group-hover:text-brand-blue">
+                {marks.length + thoughts.length} 条笔记 →
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-
-      <div className="mt-2.5 text-xs text-ink-faint">
-        {group} · 读了{pct}%
-      </div>
-
-      {/* 进入详情页 */}
-      {(marks.length > 0 || thoughts.length > 0) && (
-        <span className="mt-2 text-xs text-ink-muted transition-colors group-hover:text-brand-blue">
-          查看 {marks.length + thoughts.length} 条笔记 →
-        </span>
-      )}
-    </div>
+    </article>
   )
 }

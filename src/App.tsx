@@ -16,6 +16,15 @@ import SyncPanel from './pages/SyncPanel'
 import BookDetail from './pages/BookDetail'
 import Report from './pages/Report'
 import { formatDateTime } from './lib/format'
+import {
+  IconBack,
+  IconLogo,
+  IconLogout,
+  IconReport,
+  IconShelf,
+  IconStats,
+  IconSync,
+} from './components/icons'
 
 type Tab = 'shelf' | 'report' | 'stats' | 'sync'
 
@@ -32,12 +41,19 @@ function parseRoute(): Route {
   return { name: 'shelf' }
 }
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'shelf', label: '书架' },
-  { key: 'report', label: '阅读报告' },
-  { key: 'stats', label: '阅读统计' },
-  { key: 'sync', label: '同步' },
+const TABS: { key: Tab; label: string; short: string; Icon: typeof IconShelf }[] = [
+  { key: 'shelf', label: '书架', short: '书架', Icon: IconShelf },
+  { key: 'report', label: '阅读报告', short: '报告', Icon: IconReport },
+  { key: 'stats', label: '阅读统计', short: '统计', Icon: IconStats },
+  { key: 'sync', label: '同步', short: '同步', Icon: IconSync },
 ]
+
+const PAGE_TITLE: Record<Tab, { title: string; sub: string }> = {
+  shelf: { title: '书架', sub: '划线与想法 · 来自微信读书' },
+  report: { title: '阅读报告', sub: '周期复盘 · 来自微信读书' },
+  stats: { title: '阅读统计', sub: '阅读时长 · 偏好分析 · 来自微信读书' },
+  sync: { title: '同步', sub: '数据同步 · 来自微信读书' },
+}
 
 export default function App() {
   const { session } = useAuth()
@@ -127,130 +143,207 @@ export default function App() {
   if (!session) return <Login />
   if (!supabase) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-ink-muted">
+      <div className="flex min-h-dvh items-center justify-center px-6 text-center text-sm text-ink-muted">
         前端 Supabase 环境变量未配齐，请检查 .env.local
       </div>
     )
   }
 
-  const subtitle =
-    tab === 'stats'
-      ? '阅读时长 · 偏好分析 · 来自微信读书'
-      : tab === 'report'
-        ? '周期复盘 · 来自微信读书'
-        : tab === 'sync'
-          ? '数据同步 · 来自微信读书'
-          : '划线与想法 · 来自微信读书'
+  const page = PAGE_TITLE[tab]
+  const isDetail = route.name === 'book'
 
   return (
-    <div className="min-h-screen bg-ink-bg text-ink-txt">
-      {/* 顶栏 */}
-      <header className="border-b border-ink-line">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink-panel2">
-              <svg className="h-5 w-5 text-brand-blue" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z" />
-              </svg>
+    <div className="min-h-dvh bg-ink-bg text-ink-txt">
+      {/* ── PC：左侧固定导航（≥1024px） ───────────────────────────── */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-ink-line bg-ink-surface lg:flex">
+        <div className="flex items-center gap-3 px-5 py-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-tile bg-brand-500/[0.15] text-brand-blue">
+            <IconLogo className="h-[22px] w-[22px]" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[15px] font-semibold leading-tight">阅读工作台</div>
+            <div className="mt-0.5 truncate text-[11.5px] text-ink-faint">WeChat Reading</div>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-1 px-3 py-2">
+          {TABS.map(({ key, label, Icon }) => {
+            const on = tab === key && !isDetail
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => gotoTab(key)}
+                aria-current={on ? 'page' : undefined}
+                className={`flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-sm transition-colors duration-200 ease-app ${
+                  on
+                    ? 'bg-brand-500/[0.15] font-medium text-brand-blue'
+                    : 'text-ink-muted hover:bg-white/[.04] hover:text-ink-txt'
+                }`}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="truncate">{label}</span>
+                {on && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-ink-line p-3">
+          <div className="mb-2 truncate px-2 text-[12px] text-ink-faint">{session.user.email}</div>
+          <button
+            type="button"
+            onClick={() => void supabase?.auth.signOut()}
+            className="flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-sm text-ink-muted transition-colors duration-200 ease-app hover:bg-white/[.04] hover:text-ink-txt"
+          >
+            <IconLogout className="h-[18px] w-[18px] shrink-0" />
+            退出登录
+          </button>
+        </div>
+      </aside>
+
+      {/* ── 移动端：顶部 AppBar（<1024px） ──────────────────────────── */}
+      <header className="sticky top-0 z-30 border-b border-ink-line bg-ink-bg/[0.85] pt-safe backdrop-blur-lg lg:hidden">
+        <div className="flex h-[54px] items-center gap-2 px-2">
+          {isDetail ? (
+            <button
+              type="button"
+              onClick={() => gotoTab('shelf')}
+              aria-label="返回书架"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-ink-txt active:bg-white/[.06]"
+            >
+              <IconBack className="h-5 w-5" />
+            </button>
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center text-brand-blue">
+              <IconLogo className="h-[22px] w-[22px]" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold leading-tight">我的阅读工作台</h1>
-              <p className="text-xs text-ink-muted">{subtitle}</p>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[16px] font-semibold leading-tight">
+              {isDetail ? '书籍详情' : page.title}
+            </div>
+            <div className="truncate text-[11.5px] leading-tight text-ink-faint">
+              {isDetail ? '书架' : page.sub}
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 text-sm">
-            {exportedAt && (
-              <span className="hidden text-ink-muted md:inline">
-                数据导出于 {exportedAt}
-              </span>
-            )}
-            <span className="min-w-0 truncate text-[13px] text-ink-muted">
-              {session.user.email}
-            </span>
-            <button
-              type="button"
-              onClick={() => void supabase?.auth.signOut()}
-              className="shrink-0 rounded-lg border border-ink-line px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink-txt sm:text-sm"
-            >
-              退出登录
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => void supabase?.auth.signOut()}
+            aria-label="退出登录"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted active:bg-white/[.06]"
+          >
+            <IconLogout className="h-[19px] w-[19px]" />
+          </button>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="mx-auto max-w-6xl px-5 pt-6">
-        <div className="flex overflow-x-auto rounded-xl border border-ink-line bg-ink-panel p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => gotoTab(t.key)}
-              className={`flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] transition-colors sm:px-6 sm:text-sm ${
-                tab === t.key
-                  ? 'bg-ink-panel2 text-ink-txt'
-                  : 'text-ink-muted hover:text-ink-txt'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      {/* ── 主内容 ─────────────────────────────────────────────────── */}
+      <div className="lg:pl-[248px]">
+        <main className="mx-auto w-full max-w-[1180px] px-4 pb-[104px] pt-4 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
+          {/* PC 页头 */}
+          <div className="mb-6 hidden items-end justify-between gap-4 lg:flex">
+            <div>
+              <h1 className="text-[22px] font-semibold leading-tight">
+                {isDetail ? '书籍详情' : page.title}
+              </h1>
+              <p className="mt-1 text-[13px] text-ink-muted">
+                {isDetail ? '划线 · 想法 · AI 阅读分析' : page.sub}
+              </p>
+            </div>
+            {exportedAt && (
+              <div className="shrink-0 rounded-full border border-ink-line bg-ink-surface px-3.5 py-1.5 text-[12px] text-ink-muted">
+                数据导出于 {exportedAt}
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="hint mb-5 flex flex-wrap items-center justify-between gap-3 border-brand-coral/40 bg-brand-coral/10 text-[#ffb3b8]">
+              <span>{error}</span>
+              <button type="button" onClick={() => void loadAll()} className="btn btn-soft !min-h-[36px] !px-3 !text-[13px]">
+                重试
+              </button>
+            </div>
+          )}
+
+          {loading && tab !== 'sync' && books.length === 0 && (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="stat-card">
+                  <div className="h-7 w-20 animate-pulse rounded bg-white/[.06]" />
+                  <div className="mt-2 h-3 w-24 animate-pulse rounded bg-white/[.05]" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {route.name === 'book' ? (
+            (() => {
+              const book = books.find((b) => b.book_id === route.id)
+              if (!book) {
+                return (
+                  <div className="empty">
+                    没有找到这本书
+                    <button
+                      type="button"
+                      onClick={() => gotoTab('shelf')}
+                      className="mt-3 block w-full text-brand-blue"
+                    >
+                      返回书架
+                    </button>
+                  </div>
+                )
+              }
+              return (
+                <BookDetail
+                  book={book}
+                  highlights={highlights.filter((h) => h.book_id === book.book_id)}
+                  reviews={reviews.filter((r) => r.book_id === book.book_id)}
+                  analysis={analyses.find((a) => a.book_id === book.book_id)}
+                  onBack={() => gotoTab('shelf')}
+                />
+              )
+            })()
+          ) : (
+            <>
+              {tab === 'shelf' && (
+                <Shelf books={books} highlights={highlights} reviews={reviews} />
+              )}
+              {tab === 'report' && (
+                <Report books={books} highlights={highlights} reviews={reviews} />
+              )}
+              {tab === 'stats' && <Stats books={books} stats={stats} />}
+              {tab === 'sync' && <SyncPanel onDataChanged={loadAll} />}
+            </>
+          )}
+        </main>
       </div>
 
-      {/* 主体 */}
-      <main className="mx-auto max-w-6xl px-5 py-6 pb-20">
-        {error && (
-          <div className="mb-5 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-            {error}
-          </div>
-        )}
-
-        {loading && tab !== 'sync' && books.length === 0 && (
-          <div className="py-16 text-center text-ink-muted">加载中…</div>
-        )}
-
-        {route.name === 'book' ? (
-          (() => {
-            const book = books.find((b) => b.book_id === route.id)
-            if (!book) {
-              return (
-                <div className="rounded-xl border border-dashed border-ink-line bg-ink-panel p-10 text-center text-ink-muted">
-                  没有找到这本书，
-                  <button
-                    type="button"
-                    onClick={() => gotoTab('shelf')}
-                    className="text-brand-blue hover:underline"
-                  >
-                    返回书架
-                  </button>
-                </div>
-              )
-            }
+      {/* ── 移动端：底部 Tab Bar ────────────────────────────────────── */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/95 pb-safe backdrop-blur-lg lg:hidden">
+        <div className="flex h-[62px] items-stretch">
+          {TABS.map(({ key, short, Icon }) => {
+            const on = tab === key && !isDetail
             return (
-              <BookDetail
-                book={book}
-                highlights={highlights.filter((h) => h.book_id === book.book_id)}
-                reviews={reviews.filter((r) => r.book_id === book.book_id)}
-                analysis={analyses.find((a) => a.book_id === book.book_id)}
-                onBack={() => gotoTab('shelf')}
-              />
+              <button
+                key={key}
+                type="button"
+                onClick={() => gotoTab(key)}
+                aria-current={on ? 'page' : undefined}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 active:bg-white/[.04] ${
+                  on ? 'text-brand-blue' : 'text-ink-faint'
+                }`}
+              >
+                <Icon className="h-[21px] w-[21px]" />
+                <span className="text-[11px] leading-none">{short}</span>
+              </button>
             )
-          })()
-        ) : (
-          <>
-            {tab === 'shelf' && (
-              <Shelf books={books} highlights={highlights} reviews={reviews} />
-            )}
-            {tab === 'report' && (
-              <Report books={books} highlights={highlights} reviews={reviews} />
-            )}
-            {tab === 'stats' && <Stats books={books} stats={stats} />}
-            {tab === 'sync' && <SyncPanel onDataChanged={loadAll} />}
-          </>
-        )}
-      </main>
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

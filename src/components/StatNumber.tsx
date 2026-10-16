@@ -17,12 +17,12 @@ export default function StatNumber({
         /^\d/.test(p) ? (
           <span
             key={i}
-            className="text-[22px] font-semibold leading-none tracking-tight sm:text-3xl"
+            className="text-[24px] font-semibold leading-none tracking-tight tabular-nums sm:text-[28px]"
           >
             {p}
           </span>
         ) : (
-          <span key={i} className="text-[13px] font-medium leading-none sm:text-base">
+          <span key={i} className="text-[13px] font-medium leading-none sm:text-[15px]">
             {p}
           </span>
         ),

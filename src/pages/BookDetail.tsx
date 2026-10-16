@@ -8,6 +8,7 @@ import {
   groupCategory,
   groupNumber,
 } from '../lib/format'
+import { IconBack, IconClock, IconExternal, IconIdea, IconSpark, IconStar } from '../components/icons'
 
 interface Props {
   book: BookRow
@@ -19,7 +20,7 @@ interface Props {
 
 const norm = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, '')
 
-/** 与 WorkBuddy 参考工作台「书籍详情」视图一致 */
+/** 书籍详情：Hero + 阅读数据 + AI 分析 + 按章节的划线与想法 */
 export default function BookDetail({ book, highlights, reviews, analysis, onBack }: Props) {
   const rating = formatRating(book.rating)
 
@@ -68,7 +69,7 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
       }))
   }, [highlights])
 
-  // 阅读数据条（teal 大数字）
+  // 阅读数据条
   const readInfo: { v: string; k: string }[] = [
     { v: formatHoursCN(book.reading_time), k: '累计阅读' },
   ]
@@ -85,6 +86,8 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
     readInfo.push({ v: formatDate(book.last_note_time), k: '最近笔记' })
   }
 
+  const pct = Math.min(100, Number(book.reading_progress ?? 0))
+
   const metaPairs: [string, string][] = [
     ['出版社', book.publisher ?? ''],
     ['ISBN', book.isbn ?? ''],
@@ -96,113 +99,141 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
   const hasAnalysis = analysis && (analysis.harvest || analysis.remember?.length || analysis.preference)
 
   return (
-    <div>
-      {/* 返回 */}
+    <div className="space-y-4 sm:space-y-5">
+      {/* 返回（移动端用顶栏返回，这里只在 PC 显示） */}
       <button
         type="button"
         onClick={onBack}
-        className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink-txt"
+        className="hidden items-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink-txt lg:inline-flex"
       >
-        ← 返回书架
+        <IconBack className="h-4 w-4" />
+        返回书架
       </button>
 
-      {/* 头部：封面 + 标题 + 标签 */}
-      <div className="mb-5 flex flex-wrap gap-[22px]">
-        {book.cover_url ? (
-          <img
-            src={book.cover_url}
-            alt=""
-            className="h-[150px] w-[108px] rounded-[10px] border border-ink-line bg-ink-panel2 object-cover"
-          />
-        ) : (
-          <div className="flex h-[150px] w-[108px] items-center justify-center rounded-[10px] border border-ink-line bg-ink-panel2 text-xs text-ink-faint">
-            无封面
-          </div>
-        )}
-        <div className="min-w-[260px] flex-1">
-          <h2 className="text-2xl font-semibold leading-snug">{book.title}</h2>
-          <div className="mt-1.5 text-[13.5px] text-ink-muted">
-            {book.author}
-            {book.translator ? ` · 译者 ${book.translator}` : ''}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Tag>{groupCategory(book.category)}</Tag>
-            {rating && (
-              <span className="rounded-md border border-ink-line bg-ink-panel2 px-2.5 py-[3px] text-[11.5px] text-brand-amber">
-                ★ {rating} 分{book.rating_count ? ` · ${groupNumber(book.rating_count)}人评价` : ''}
+      {/* Hero */}
+      <section className="card card-pad">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
+          {book.cover_url ? (
+            <img
+              src={book.cover_url}
+              alt=""
+              className="h-[168px] w-[120px] shrink-0 self-center rounded-[12px] border border-ink-line bg-ink-surface2 object-cover sm:self-start"
+            />
+          ) : (
+            <div className="flex h-[168px] w-[120px] shrink-0 items-center justify-center self-center rounded-[12px] border border-ink-line bg-ink-surface2 text-xs text-ink-faint sm:self-start">
+              无封面
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[19px] font-semibold leading-snug sm:text-[22px]">{book.title}</h2>
+            <div className="mt-1.5 text-[13px] text-ink-muted">
+              {book.author}
+              {book.translator ? ` · 译者 ${book.translator}` : ''}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="chip !min-h-[30px] chip-off !text-[12px]">
+                {groupCategory(book.category)}
               </span>
-            )}
-            <Tag>划线 {highlights.length} 条</Tag>
-            <Tag>想法 {reviews.length} 条</Tag>
-          </div>
-          {book.reader_link && (
-            <div className="mt-3.5 text-[13px]">
+              {rating && (
+                <span className="chip !min-h-[30px] border-brand-amber/[0.45] bg-brand-amber/[0.12] !text-[12px] text-brand-amber">
+                  <IconStar className="h-3.5 w-3.5" />
+                  {rating} 分
+                  {book.rating_count ? ` · ${groupNumber(book.rating_count)}人评价` : ''}
+                </span>
+              )}
+              <span className="chip !min-h-[30px] chip-off !text-[12px]">
+                划线 <span className="tabular-nums text-brand-blue">{highlights.length}</span> 条
+              </span>
+              <span className="chip !min-h-[30px] chip-off !text-[12px]">
+                想法 <span className="tabular-nums text-brand-purple">{reviews.length}</span> 条
+              </span>
+            </div>
+
+            {/* 进度 */}
+            <div className="mt-4 max-w-[420px]">
+              <div className="mb-1.5 flex items-center justify-between text-[11.5px] text-ink-faint">
+                <span>阅读进度</span>
+                <span className="tabular-nums">{pct}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-ink-surface2">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-brand-500/50 to-brand-400 transition-[width] duration-300 ease-app"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+
+            {book.reader_link && (
               <a
                 href={book.reader_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-blue hover:underline"
+                className="btn btn-soft mt-4 !min-h-[40px] !text-[13px]"
               >
-                在微信读书中打开 ↗
+                <IconExternal className="h-4 w-4" />
+                在微信读书中打开
               </a>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* 阅读数据条 */}
-      <div className="mb-7 flex flex-wrap gap-8 rounded-xl border border-ink-line bg-ink-panel px-5 py-4">
+      <section className="card grid grid-cols-2 gap-4 px-4 py-4 sm:grid-cols-3 sm:px-5 lg:grid-cols-5">
         {readInfo.map((r) => (
           <div key={r.k}>
-            <div className="text-[19px] font-semibold text-brand-teal">{r.v}</div>
-            <div className="mt-0.5 text-[11.5px] text-ink-muted">{r.k}</div>
+            <div className="text-[18px] font-semibold leading-none text-brand-teal sm:text-[19px]">
+              {r.v}
+            </div>
+            <div className="mt-1.5 text-[11.5px] text-ink-muted">{r.k}</div>
           </div>
         ))}
-      </div>
+      </section>
 
       {/* 元信息 */}
       {metaPairs.some(([, v]) => v) && (
-        <div className="mb-5 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+        <section className="grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
           {metaPairs.map(([k, v]) =>
             v ? (
-              <div key={k} className="rounded-[10px] border border-ink-line bg-ink-panel px-3.5 py-[11px]">
+              <div key={k} className="rounded-tile border border-ink-line bg-ink-surface px-3.5 py-2.5">
                 <div className="text-[11px] text-ink-faint">{k}</div>
                 <div className="mt-0.5 text-[13px] font-medium">{v}</div>
               </div>
             ) : null,
           )}
-        </div>
+        </section>
       )}
 
       {/* 书籍简介 */}
       {book.intro && (
-        <section className="mb-5 rounded-[14px] border border-ink-line bg-ink-panel px-[22px] py-5">
-          <h3 className="mb-3 text-[15px] font-semibold">书籍简介</h3>
-          <div className="text-[13px] leading-relaxed text-ink-muted">{book.intro}</div>
+        <section className="card card-pad">
+          <h3 className="section-title mb-3">书籍简介</h3>
+          <p className="text-[13px] leading-relaxed text-ink-muted">{book.intro}</p>
         </section>
       )}
 
       {/* AI 阅读分析 */}
       {hasAnalysis ? (
-        <section className="mb-7 rounded-xl border border-ink-line border-l-[3px] border-l-brand-amber bg-ink-panel px-[22px] py-5">
-          <h3 className="mb-4 text-[15px] font-semibold">🧠 阅读分析</h3>
-          {analysis!.harvest && (
-            <ASec k="我收获了什么" v={analysis!.harvest} />
-          )}
+        <section className="card card-pad border-l-2 border-l-brand-amber">
+          <h3 className="section-title mb-4">
+            <IconSpark className="mr-1.5 h-4 w-4 text-brand-amber" />
+            阅读分析
+          </h3>
+          {analysis!.harvest && <ASec k="我收获了什么" v={analysis!.harvest} />}
           {analysis!.remember && analysis!.remember.length > 0 && (
             <ASec k="我想记住什么" v={analysis!.remember.map((s) => `「${s}」`).join(' ')} />
           )}
-          {analysis!.preference && (
-            <ASec k="我的笔记偏好" v={analysis!.preference} />
-          )}
+          {analysis!.preference && <ASec k="我的笔记偏好" v={analysis!.preference} />}
           {analysis!.keywords && analysis!.keywords.length > 0 && (
             <div>
-              <div className="mb-1 text-xs font-semibold text-brand-amber">关键词</div>
-              <div className="mt-1 flex flex-wrap gap-[7px]">
+              <div className="mb-2 text-[12px] font-semibold text-brand-amber">关键词</div>
+              <div className="flex flex-wrap gap-2">
                 {analysis!.keywords.map((k) => (
                   <span
                     key={k}
-                    className="rounded-full bg-brand-amber/10 px-2.5 py-[3px] text-[11.5px] text-brand-amber"
+                    className="rounded-full bg-brand-amber/[0.12] px-2.5 py-[3px] text-[11.5px] text-brand-amber"
                   >
                     {k}
                   </span>
@@ -212,57 +243,61 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
           )}
         </section>
       ) : (
-        <section className="mb-7 rounded-xl border border-dashed border-ink-line bg-ink-panel px-[22px] py-4 text-[13px] text-ink-faint">
-          还没有这本书的阅读分析，到「同步」页运行 AI 分析即可生成（收获 / 想记住的句子 / 笔记偏好 / 关键词）。
-        </section>
+        <div className="empty">
+          还没有这本书的阅读分析，到「同步」页运行 AI 分析即可生成（收获 / 想记住的句子 / 笔记偏好 /
+          关键词）。
+        </div>
       )}
 
       {/* 按章节分组的划线 */}
       {chapters.map((c) => (
-        <section key={c.title + c.uid} className="mb-6">
-          <h4 className="mb-3 border-b border-ink-line pb-2 text-[14.5px] font-semibold text-brand-teal">
-            {c.title}
-            <small className="ml-1.5 text-xs font-normal text-ink-faint">
+        <section key={c.title + c.uid} className="pt-1">
+          <h4 className="mb-3 flex items-baseline gap-2 border-b border-ink-line pb-2 text-[14.5px] font-semibold text-brand-teal">
+            <span className="min-w-0 truncate">{c.title}</span>
+            <span className="shrink-0 text-xs font-normal tabular-nums text-ink-faint">
               {c.marks.length} 条划线
-            </small>
+            </span>
           </h4>
           {c.marks.map((m) => (
-            <div
-              key={m.bookmark_id}
-              className="mb-3 rounded-xl border border-ink-line bg-ink-panel px-[17px] py-[15px]"
-            >
-              <div className="border-l-[2.5px] border-brand-blue pl-3 text-sm leading-[1.7]">
+            <article key={m.bookmark_id} className="card mb-3 px-4 py-3.5 sm:px-[17px]">
+              <div className="border-l-[2.5px] border-brand-blue/70 pl-3 text-[14px] leading-[1.75]">
                 {m.mark_text}
               </div>
-              <div className="mt-2.5 text-[11.5px] text-ink-faint">
+              <div className="mt-2.5 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
+                <IconClock className="h-3.5 w-3.5" />
                 划线于 {formatDate(m.create_time)}
               </div>
               {attached.get(m.bookmark_id)?.map((r) => (
-                <div key={r.review_id} className="mt-3 rounded-lg bg-ink-panel2 px-[13px] py-[11px]">
-                  <div className="mb-0.5 text-[11px] font-semibold text-brand-teal">
-                    💡 我的想法
+                <div
+                  key={r.review_id}
+                  className="mt-3 rounded-tile bg-brand-teal/[.07] px-3.5 py-3"
+                >
+                  <div className="mb-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-brand-teal">
+                    <IconIdea className="h-3.5 w-3.5" />
+                    我的想法
                   </div>
                   <div className="text-[13.5px] leading-relaxed">{r.content}</div>
                 </div>
               ))}
-            </div>
+            </article>
           ))}
         </section>
       ))}
 
       {/* 未关联原文的想法 */}
       {loose.length > 0 && (
-        <section className="mt-2 rounded-xl border border-dashed border-ink-line bg-ink-panel px-[18px] py-4">
-          <h5 className="mb-2.5 text-[13px] font-semibold text-ink-muted">
+        <section className="card border-dashed px-4 py-4">
+          <h5 className="mb-3 text-[13px] font-semibold text-ink-muted">
             未关联原文的想法（{loose.length}）
           </h5>
           {loose.map((r) => (
-            <div key={r.review_id} className="border-b border-ink-line py-2 text-[13.5px] leading-relaxed last:border-none">
+            <div
+              key={r.review_id}
+              className="border-b border-ink-line py-2.5 text-[13.5px] leading-relaxed last:border-none"
+            >
               {r.content}
               {r.chapter_title && (
-                <small className="mt-0.5 block text-[11.5px] text-ink-faint">
-                  {r.chapter_title}
-                </small>
+                <small className="mt-0.5 block text-[11.5px] text-ink-faint">{r.chapter_title}</small>
               )}
             </div>
           ))}
@@ -270,27 +305,17 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
       )}
 
       {highlights.length === 0 && reviews.length === 0 && (
-        <div className="rounded-xl border border-dashed border-ink-line bg-ink-panel p-10 text-center text-ink-muted">
-          这本书还没有同步到划线或想法
-        </div>
+        <div className="empty">这本书还没有同步到划线或想法</div>
       )}
     </div>
   )
 }
 
-function Tag({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-md border border-ink-line bg-ink-panel2 px-2.5 py-[3px] text-[11.5px] text-ink-muted">
-      {children}
-    </span>
-  )
-}
-
 function ASec({ k, v }: { k: string; v: string }) {
   return (
-    <div className="mb-[15px] last:mb-0">
-      <div className="mb-[3px] text-xs font-semibold text-brand-amber">{k}</div>
-      <div className="text-[13.5px] leading-relaxed">{v}</div>
+    <div className="mb-4 last:mb-0">
+      <div className="mb-1 text-[12px] font-semibold text-brand-amber">{k}</div>
+      <div className="text-[13.5px] leading-relaxed text-ink-txt/90">{v}</div>
     </div>
   )
 }

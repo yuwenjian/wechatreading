@@ -2,38 +2,212 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  min-height: 100%;
+@layer base {
+  :root {
+    /* iOS 安全区 */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: #0b0d12;
+    color: #edf0f6;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    /* 移动端：点按不产生灰色高亮块，改用自定义的 active 反馈 */
+    -webkit-tap-highlight-color: transparent;
+    /* 去掉移动端 300ms 点击延迟 */
+    touch-action: manipulation;
+  }
+
+  a {
+    color: #6fa9fa;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* 键盘可达性：统一焦点环 */
+  :focus-visible {
+    outline: 2px solid #4c8df6;
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+
+  /* 触摸设备上不做 hover 残留（避免点击后样式粘住） */
+  @media (hover: hover) {
+    .tap-none:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2a3140;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #39424f;
+    background-clip: content-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-body {
-  margin: 0;
-  background: #0f1115;
-  color: #e8eaf0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
+@layer components {
+  /* ── 容器 ───────────────────────────────────────────── */
+  .card {
+    @apply rounded-card border border-ink-line bg-ink-surface shadow-card;
+  }
+
+  .card-pad {
+    @apply p-4 sm:p-5;
+  }
+
+  .empty {
+    @apply rounded-card border border-dashed border-ink-line bg-ink-surface/60 px-5 py-10 text-center text-sm text-ink-muted;
+  }
+
+  /* ── 按钮：最小高 44px 满足触控 ──────────────────────── */
+  .btn {
+    @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2
+      rounded-tile px-4 text-sm font-medium
+      transition-[background-color,border-color,color,transform,opacity] duration-200 ease-app
+      active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .btn-primary {
+    @apply bg-brand-500 text-white shadow-glow hover:bg-brand-600;
+  }
+
+  .btn-soft {
+    @apply border border-ink-line bg-ink-surface2 text-ink-txt hover:border-ink-line2 hover:bg-[#222834];
+  }
+
+  .btn-ghost {
+    @apply border border-ink-line bg-transparent text-ink-muted hover:border-ink-line2 hover:text-ink-txt;
+  }
+
+  /* ── 分段控件 / 筛选 chip ────────────────────────────── */
+  .seg {
+    @apply inline-flex rounded-tile border border-ink-line bg-ink-surface p-1;
+  }
+
+  .seg-item {
+    @apply inline-flex min-h-[36px] items-center justify-center rounded-[9px] px-4 text-[13px]
+      transition-colors duration-200 ease-app sm:text-sm;
+  }
+
+  .seg-on {
+    @apply bg-brand-500/[0.18] text-brand-blue;
+  }
+
+  .seg-off {
+    @apply text-ink-muted hover:text-ink-txt;
+  }
+
+  .chip {
+    @apply inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3.5 text-[13px]
+      transition-colors duration-200 ease-app;
+  }
+
+  .chip-on {
+    @apply border-brand-500/[0.55] bg-brand-500/[0.15] text-brand-blue;
+  }
+
+  .chip-off {
+    @apply border-ink-line bg-ink-surface text-ink-muted hover:border-ink-line2 hover:text-ink-txt;
+  }
+
+  /* ── 表单：16px 防 iOS 自动缩放 ──────────────────────── */
+  .field {
+    @apply min-h-[46px] w-full rounded-tile border border-ink-line bg-ink-surface2 px-3.5
+      text-[16px] text-ink-txt outline-none transition-colors duration-200 ease-app
+      placeholder:text-ink-faint focus:border-brand-500;
+  }
+
+  /* ── 标题 ───────────────────────────────────────────── */
+  .section-title {
+    @apply flex flex-wrap items-baseline gap-x-2 text-[15px] font-semibold text-ink-txt;
+  }
+
+  .section-sub {
+    @apply text-xs font-normal text-ink-faint;
+  }
+
+  /* ── 统计卡 ─────────────────────────────────────────── */
+  .stat-card {
+    @apply relative overflow-hidden rounded-card border border-ink-line bg-ink-surface px-4 py-3.5 shadow-card sm:px-5 sm:py-4;
+  }
+
+  /* ── 提示条 ─────────────────────────────────────────── */
+  .hint {
+    @apply rounded-tile border px-4 py-3 text-[13px] leading-relaxed;
+  }
 }
 
-a {
-  color: #6aa6e8;
-  text-decoration: none;
-}
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--sat);
+  }
 
-a:hover {
-  text-decoration: underline;
-}
+  .pb-safe {
+    padding-bottom: var(--sab);
+  }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+  .px-safe {
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #2a2f3a;
-  border-radius: 6px;
+  .scroll-x-none {
+    scrollbar-width: none;
+  }
+
+  .scroll-x-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }

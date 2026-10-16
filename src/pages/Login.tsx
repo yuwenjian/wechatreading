@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { IconLogo } from '../components/icons'
 
 /**
  * 固定账号：配了这个值，页面只要求输入密码。
@@ -52,57 +53,80 @@ export default function Login() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[420px] flex-col justify-center px-5 py-12">
-      <div className="rounded-2xl border border-ink-line bg-ink-panel p-7">
-        <h1 className="text-[18px] font-medium">我的阅读工作台</h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-          这是私人数据空间，需要登录后查看。
-        </p>
+    <div className="flex min-h-dvh items-center justify-center px-5 py-10 pt-safe pb-safe">
+      <div className="w-full max-w-[400px]">
+        {/* 品牌区 */}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-brand-500/[0.15] text-brand-blue shadow-glow">
+            <IconLogo className="h-8 w-8" />
+          </div>
+          <h1 className="mt-4 text-[20px] font-semibold">我的阅读工作台</h1>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
+            私人数据空间，登录后查看你的划线与想法
+          </p>
+        </div>
 
-        <form onSubmit={submit} className="mt-6 space-y-3">
+        <form onSubmit={submit} className="card card-pad space-y-3.5">
           {FIXED_EMAIL ? (
-            <div className="flex items-center justify-between rounded-lg border border-ink-line bg-ink-panel2 px-3.5 py-2.5">
+            <div className="flex items-center justify-between rounded-tile border border-ink-line bg-ink-surface2 px-3.5 py-2.5">
               <span className="text-[12.5px] text-ink-muted">账号</span>
-              <span className="text-[13.5px]">{FIXED_EMAIL}</span>
+              <span className="truncate pl-3 text-[13.5px]">{FIXED_EMAIL}</span>
             </div>
           ) : (
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="账号邮箱"
-              autoComplete="username"
-              autoFocus
-              className="w-full rounded-lg border border-ink-line bg-ink-panel2 px-3.5 py-2.5 text-[13.5px] outline-none placeholder:text-ink-faint focus:border-[#3b5a86]"
-            />
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-[12.5px] text-ink-muted">
+                账号邮箱
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="username"
+                autoFocus
+                className="field"
+              />
+            </div>
           )}
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="密码"
-            autoComplete="current-password"
-            autoFocus={Boolean(FIXED_EMAIL)}
-            className="w-full rounded-lg border border-ink-line bg-ink-panel2 px-3.5 py-2.5 text-[13.5px] outline-none placeholder:text-ink-faint focus:border-[#3b5a86]"
-          />
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-[12.5px] text-ink-muted">
+              密码
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="输入密码"
+              autoComplete="current-password"
+              autoFocus={Boolean(FIXED_EMAIL)}
+              className="field"
+            />
+          </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-[#3b5a86] py-2.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[#46689a] disabled:opacity-50"
-          >
+          <button type="submit" disabled={busy} className="btn btn-primary w-full">
             {busy ? '登录中…' : '登录'}
           </button>
 
-          {error && <p className="text-[12.5px] text-[#e08a8a]">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="hint border-brand-coral/40 bg-brand-coral/10 !py-2.5 text-[#ffb3b8]"
+            >
+              {error}
+            </p>
+          )}
         </form>
-      </div>
 
-      <p className="mt-4 text-center text-[11.5px] leading-relaxed text-ink-faint">
-        数据存放在你自己的 Supabase 项目里，通过行级安全策略限制为仅白名单账号可读。
-        忘记密码时在项目目录执行 <span className="text-ink-muted">npm run set-password</span> 重设。
-      </p>
+        <p className="mt-4 text-center text-[11.5px] leading-relaxed text-ink-faint">
+          数据存放在你自己的 Supabase 项目里，通过行级安全策略限制为仅白名单账号可读。
+          <br />
+          忘记密码时在项目目录执行{' '}
+          <span className="text-ink-muted">npm run set-password</span> 重设。
+        </p>
+      </div>
     </div>
   )
 }
