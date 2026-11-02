@@ -122,8 +122,8 @@ export default function BookDetail({ book, highlights, reviews, analysis, onBack
       <section className="card relative overflow-hidden">
         {/* 右上角品牌光晕：制造纵深，不用条纹或渐变文字 */}
         <div
-          className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full opacity-30 blur-2xl"
-          style={{ background: 'radial-gradient(circle, oklch(var(--brand-500) / .4), transparent 70%)' }}
+          className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full opacity-70 blur-2xl"
+          style={{ background: 'radial-gradient(circle, oklch(var(--brand-500) / .18), transparent 70%)' }}
         />
         <div className="relative flex flex-col gap-4 p-4 sm:flex-row sm:gap-6 sm:p-6">
           {book.cover_url ? (

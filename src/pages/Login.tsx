@@ -56,8 +56,12 @@ export default function Login() {
     <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10 pt-safe pb-safe">
       {/* 背景光晕：登录页唯一的大面积装饰，保持克制 */}
       <div
-        className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 opacity-25 blur-3xl"
-        style={{ background: 'radial-gradient(ellipse at center, oklch(var(--brand-500) / .5), transparent 65%)' }}
+        className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 opacity-45 blur-3xl"
+        style={{ background: 'radial-gradient(ellipse at center, oklch(var(--brand-500) / .25), transparent 65%)' }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-24 h-[320px] w-[420px] opacity-40 blur-3xl"
+        style={{ background: 'radial-gradient(circle, oklch(var(--brand-teal) / .22), transparent 70%)' }}
       />
       <div className="relative w-full max-w-[400px]">
         {/* 品牌区 */}

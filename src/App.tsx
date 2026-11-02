@@ -334,7 +334,7 @@ export default function App() {
       </div>
 
       {/* ── 移动端：底部 Tab Bar ────────────────────────────────────── */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/[0.95] pb-safe backdrop-blur-lg lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/[0.95] pb-safe shadow-[0_-10px_30px_-22px_oklch(0.45_0.03_200_/_0.35)] backdrop-blur-lg lg:hidden">
         <div className="flex h-[62px] items-stretch">
           {TABS.map(({ key, short, Icon }) => {
             const on = tab === key && !isDetail

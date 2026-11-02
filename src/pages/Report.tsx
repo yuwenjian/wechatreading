@@ -450,7 +450,7 @@ export default function Report({ books, highlights, reviews }: Props) {
                     .map((n) => (
                       <div
                         key={n.id}
-                        className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-3"
+                        className="rounded-tile border border-ink-line bg-ink-surface px-3.5 py-3"
                       >
                         <div className="mb-1.5 flex items-center gap-2 text-2xs text-ink-faint">
                           <span
@@ -517,7 +517,7 @@ function ReportBody({ content }: { content: ReportContent }) {
             {content.themes.map((t, i) => (
               <div
                 key={i}
-                className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-2.5"
+                className="rounded-tile border border-ink-line bg-ink-surface px-3.5 py-2.5"
               >
                 <div className="text-sm font-medium">{t.title}</div>
                 <div className="mt-1 text-xs leading-relaxed text-ink-muted">{t.note}</div>
@@ -536,7 +536,7 @@ function ReportBody({ content }: { content: ReportContent }) {
             {content.picks.map((p, i) => (
               <div
                 key={i}
-                className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-3"
+                className="rounded-tile border border-ink-line bg-ink-surface px-3.5 py-3"
               >
                 <div className="border-l-2 border-brand-amber/60 pl-3 text-sm leading-relaxed">
                   {p.excerpt}

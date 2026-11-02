@@ -355,7 +355,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
               {history.map((t) => (
                 <li
                   key={t.task_id}
-                  className="rounded-tile border border-ink-line bg-ink-surface2/50 p-3"
+                  className="rounded-tile border border-ink-line bg-ink-surface p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs tnum text-ink-muted">

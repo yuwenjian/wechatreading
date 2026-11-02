@@ -21,12 +21,13 @@ export default {
           hi: 'oklch(var(--ink-hi) / <alpha-value>)',
           muted: 'oklch(var(--ink-muted) / <alpha-value>)',
           faint: 'oklch(var(--ink-faint) / <alpha-value>)',
+          white: 'oklch(var(--ink-white) / <alpha-value>)',
         },
         brand: {
           400: 'oklch(var(--brand-400) / <alpha-value>)',
           500: 'oklch(var(--brand-500) / <alpha-value>)',
           600: 'oklch(var(--brand-600) / <alpha-value>)',
-          blue: 'oklch(var(--brand-400) / <alpha-value>)',
+          blue: 'oklch(var(--brand-600) / <alpha-value>)',
           teal: 'oklch(var(--brand-teal) / <alpha-value>)',
           amber: 'oklch(var(--brand-amber) / <alpha-value>)',
           purple: 'oklch(var(--brand-purple) / <alpha-value>)',
@@ -77,10 +78,11 @@ export default {
         card: '16px',
         tile: '12px',
       },
+      /* 浅色下的阴影要「薄而散」：小偏移 + 大模糊 + 低透明度，避免脏灰边 */
       boxShadow: {
-        card: '0 1px 2px oklch(0.12 0.01 264 / .5), 0 10px 28px -18px oklch(0.10 0.01 264 / .8)',
-        pop: '0 18px 44px -18px oklch(0.10 0.01 264 / .85)',
-        glow: '0 0 0 1px oklch(var(--brand-500) / .35), 0 8px 24px -12px oklch(var(--brand-500) / .5)',
+        card: '0 1px 2px oklch(0.55 0.02 200 / .06), 0 10px 26px -18px oklch(0.48 0.03 200 / .28)',
+        pop: '0 18px 40px -20px oklch(0.45 0.03 200 / .35)',
+        glow: '0 0 0 1px oklch(var(--brand-500) / .28), 0 8px 22px -12px oklch(var(--brand-500) / .35)',
       },
       transitionTimingFunction: {
         app: 'cubic-bezier(.22,.61,.36,1)',

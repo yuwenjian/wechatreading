@@ -209,8 +209,8 @@ function FocusCard({ item, onOpen }: { item: ShelfItem; onOpen: () => void }) {
     >
       {/* 右上角光晕：给焦点卡一点纵深，不使用渐变文字或条纹 */}
       <div
-        className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full opacity-40 blur-2xl"
-        style={{ background: 'radial-gradient(circle, oklch(var(--brand-500) / .35), transparent 70%)' }}
+        className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full opacity-70 blur-2xl"
+        style={{ background: 'radial-gradient(circle, oklch(var(--brand-500) / .22), transparent 70%)' }}
       />
 
       <div className="relative flex gap-4 p-4 sm:gap-5 sm:p-5">
@@ -306,7 +306,7 @@ function BookCard({
           </div>
         )}
         {pct >= 100 && (
-          <span className="absolute -right-1.5 -top-1.5 rounded-full bg-brand-teal px-1.5 py-[2px] text-[10px] font-medium text-ink-bg">
+          <span className="absolute -right-1.5 -top-1.5 rounded-full bg-brand-teal px-1.5 py-[2px] text-2xs font-medium text-ink-white">
             读完
           </span>
         )}

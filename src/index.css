@@ -4,34 +4,36 @@
 
 @layer base {
   /*
-   * OKLCH 色板：只存 "L C H"，由 tailwind.config.js 拼成 oklch(L C H / alpha)。
-   * 中性色统一带 264 色相（冷蓝调），保证深浅阶梯之间是感知均匀的明度差。
+   * 清新浅色：薄荷白底 + 青绿主色。
+   * OKLCH 只存 "L C H"，由 tailwind.config.js 拼成 oklch(L C H / alpha)。
+   * 中性色统一 195 色相（青调），文字统一 245 色相（冷灰蓝），靠色相对拉出层次。
    */
   :root {
-    --ink-bg: 0.165 0.012 264;
-    --ink-surface: 0.212 0.015 264;
-    --ink-surface2: 0.258 0.018 264;
-    --ink-line: 0.315 0.02 264;
-    --ink-line2: 0.385 0.022 264;
-    --ink-txt: 0.94 0.008 264;
-    --ink-hi: 0.985 0.003 264;
-    --ink-muted: 0.735 0.02 264;
-    --ink-faint: 0.605 0.022 264;
+    --ink-bg: 0.984 0.008 195;
+    --ink-surface: 0.998 0.002 195;
+    --ink-surface2: 0.955 0.012 195;
+    --ink-line: 0.905 0.014 195;
+    --ink-line2: 0.838 0.018 195;
+    --ink-txt: 0.32 0.025 245;
+    --ink-hi: 0.235 0.03 245;
+    --ink-muted: 0.505 0.022 245;
+    --ink-faint: 0.60 0.02 240;
+    --ink-white: 0.994 0.004 195;
 
-    --brand-400: 0.735 0.145 255;
-    --brand-500: 0.625 0.185 255;
-    --brand-600: 0.555 0.19 255;
-    --brand-teal: 0.795 0.125 175;
-    --brand-amber: 0.815 0.115 70;
-    --brand-purple: 0.755 0.13 300;
-    --brand-coral: 0.695 0.165 20;
+    --brand-400: 0.735 0.115 190;
+    --brand-500: 0.585 0.125 190;
+    --brand-600: 0.522 0.125 190;
+    --brand-teal: 0.598 0.112 178;
+    --brand-amber: 0.615 0.128 68;
+    --brand-purple: 0.598 0.145 300;
+    --brand-coral: 0.615 0.168 22;
 
     /* iOS 安全区 */
     --sat: env(safe-area-inset-top, 0px);
     --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -50,7 +52,6 @@
     color: oklch(var(--ink-txt));
     font-size: 15px;
     line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* 移动端：点按不产生灰色高亮块，改用自定义的 active 反馈 */
     -webkit-tap-highlight-color: transparent;
@@ -84,7 +85,7 @@
   }
 
   ::selection {
-    background: oklch(var(--brand-500) / 0.35);
+    background: oklch(var(--brand-500) / 0.2);
   }
 
   ::-webkit-scrollbar {
@@ -142,7 +143,7 @@
   }
 
   .btn-primary {
-    @apply bg-brand-500 text-ink-hi shadow-glow hover:bg-brand-600;
+    @apply bg-brand-500 text-ink-white shadow-glow hover:bg-brand-600;
   }
 
   .btn-soft {
@@ -203,6 +204,8 @@
   /* ── 统计卡 ─────────────────────────────────────────── */
   .stat-card {
     @apply relative overflow-hidden rounded-card border border-ink-line bg-ink-surface px-4 py-4 shadow-card sm:px-5;
+    /* 极淡的青绿斜向渐变：让白色卡片在薄荷底上有一点通透感 */
+    background-image: linear-gradient(155deg, oklch(var(--brand-500) / 0.06), transparent 58%);
   }
 
   /* ── 提示条 ─────────────────────────────────────────── */
