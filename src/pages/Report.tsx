@@ -11,7 +11,15 @@ import type {
 } from '../lib/types'
 import { formatDate, formatDateTime, formatHoursCN } from '../lib/format'
 import StatNumber from '../components/StatNumber'
-import { IconBack, IconExternal, IconNext, IconSpark } from '../components/icons'
+import EmptyState from '../components/EmptyState'
+import {
+  IconAlert,
+  IconBack,
+  IconExternal,
+  IconNext,
+  IconSpark,
+  IllustEmptyNote,
+} from '../components/icons'
 
 /**
  * 阅读报告页：按周/月复盘「读了哪些书、留了哪些笔记」，并可生成 AI 报告。
@@ -248,12 +256,12 @@ export default function Report({ books, highlights, reviews }: Props) {
             type="button"
             onClick={() => setOffset((o) => o - 1)}
             aria-label={`上一${unitCN(mode)}`}
-            className="flex h-10 flex-1 items-center justify-center gap-1 rounded-[9px] text-[13px] text-ink-muted transition-colors hover:bg-white/[.05] hover:text-ink-txt sm:flex-none sm:px-3"
+            className="flex h-10 flex-1 items-center justify-center gap-1 rounded-[9px] text-sm text-ink-muted transition-colors hover:bg-ink-txt/[0.05] hover:text-ink-txt sm:flex-none sm:px-3"
           >
             <IconBack className="h-4 w-4" />
             上一{unitCN(mode)}
           </button>
-          <span className="min-w-[104px] px-1 text-center text-[13px] font-medium tabular-nums">
+          <span className="min-w-[104px] px-1 text-center text-sm font-medium tnum">
             {label}
           </span>
           <button
@@ -261,7 +269,7 @@ export default function Report({ books, highlights, reviews }: Props) {
             disabled={offset === 0}
             onClick={() => setOffset((o) => o + 1)}
             aria-label={`下一${unitCN(mode)}`}
-            className="flex h-10 flex-1 items-center justify-center gap-1 rounded-[9px] text-[13px] text-ink-muted transition-colors hover:bg-white/[.05] hover:text-ink-txt disabled:pointer-events-none disabled:opacity-40 sm:flex-none sm:px-3"
+            className="flex h-10 flex-1 items-center justify-center gap-1 rounded-[9px] text-sm text-ink-muted transition-colors hover:bg-ink-txt/[0.05] hover:text-ink-txt disabled:pointer-events-none disabled:opacity-40 sm:flex-none sm:px-3"
           >
             下一{unitCN(mode)}
             <IconNext className="h-4 w-4" />
@@ -274,15 +282,17 @@ export default function Report({ books, highlights, reviews }: Props) {
         {kpis.map((s) => (
           <div key={s.label} className="stat-card">
             <StatNumber text={s.value} className={s.tw} />
-            <div className="mt-2 text-[12.5px] text-ink-muted sm:text-[13px]">{s.label}</div>
+            <div className="mt-2 text-xs text-ink-muted sm:text-sm">{s.label}</div>
           </div>
         ))}
       </div>
 
       {notes.length === 0 ? (
-        <div className="empty">
-          这个周期没有任何划线或想法 —— 换个周期看看，或者去读会儿书
-        </div>
+        <EmptyState
+          icon={<IllustEmptyNote className="h-8 w-8" />}
+          title="这个周期还没有笔记"
+          desc="换个周期看看，或者去读会儿书再来复盘。"
+        />
       ) : (
         <>
           {/* 活跃分布：周/月按天，年按月 */}
@@ -302,7 +312,7 @@ export default function Report({ books, highlights, reviews }: Props) {
                         : ''
                 return (
                   <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-                    <span className="text-[10px] leading-none tabular-nums text-ink-faint">
+                    <span className="text-[10px] leading-none tnum text-ink-faint">
                       {v > 0 ? v : ''}
                     </span>
                     <div
@@ -325,7 +335,7 @@ export default function Report({ books, highlights, reviews }: Props) {
               这段时间读的书
               <span className="section-sub">按笔记数排序</span>
             </h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="stagger grid grid-cols-1 gap-3 md:grid-cols-2">
               {activeBooks.map(({ book, count }) => (
                 <button
                   key={book.book_id}
@@ -348,9 +358,9 @@ export default function Report({ books, highlights, reviews }: Props) {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-medium">{book.title}</div>
-                    <div className="mt-0.5 truncate text-[12px] text-ink-muted">{book.author}</div>
-                    <div className="mt-1.5 text-[12px] text-ink-muted">
+                    <div className="truncate text-base font-medium">{book.title}</div>
+                    <div className="mt-0.5 truncate text-xs text-ink-muted">{book.author}</div>
+                    <div className="mt-1.5 text-xs text-ink-muted">
                       本{unitCN(mode)}
                       <span className="font-medium text-brand-amber"> {count} </span>条笔记 ·{' '}
                       {formatHoursCN(book.reading_time)} · 读了
@@ -377,7 +387,7 @@ export default function Report({ books, highlights, reviews }: Props) {
           </h3>
           <div className="flex items-center gap-3">
             {stale && (
-              <span className="text-[12.5px] text-brand-amber">期间笔记有更新，建议重新生成</span>
+              <span className="text-xs text-brand-amber">期间笔记有更新，建议重新生成</span>
             )}
             {notes.length > 0 && (
               <button
@@ -393,13 +403,14 @@ export default function Report({ books, highlights, reviews }: Props) {
         </div>
 
         {genError && (
-          <div className="hint mb-4 border-brand-coral/40 bg-brand-coral/10 text-[#ffb3b8]">
-            {genError}
+          <div className="hint mb-4 flex items-start gap-2.5 border-brand-coral/[0.4] bg-brand-coral/[0.1] text-brand-coral">
+            <IconAlert className="mt-0.5 h-[18px] w-[18px] shrink-0" />
+            <span>{genError}</span>
           </div>
         )}
 
         {generating ? (
-          <div className="flex items-center justify-center gap-3 py-8 text-[13px] text-ink-muted">
+          <div className="flex items-center justify-center gap-3 py-8 text-sm text-ink-muted">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-line2 border-t-brand-500" />
             AI 正在阅读你{mode === 'year' ? '今年' : `这${unitCN(mode)}`}的 {notes.length}{' '}
             条笔记并撰写报告，大约需要 10~30 秒…
@@ -407,9 +418,9 @@ export default function Report({ books, highlights, reviews }: Props) {
         ) : report ? (
           <ReportBody content={report.content} />
         ) : reportLoading ? (
-          <div className="py-6 text-center text-[13px] text-ink-muted">读取缓存中…</div>
+          <div className="py-6 text-center text-sm text-ink-muted">读取缓存中…</div>
         ) : (
-          <div className="py-6 text-center text-[13px] text-ink-muted">
+          <div className="py-6 text-center text-sm text-ink-muted">
             {notes.length === 0
               ? '这个周期没有笔记，无米下锅。'
               : '还没有生成过这个周期的报告，点右上角按钮让 AI 基于上面的数据写一份。'}
@@ -428,8 +439,8 @@ export default function Report({ books, highlights, reviews }: Props) {
             {activeBooks.map(({ book }) => (
               <div key={book.book_id}>
                 <div className="mb-2 flex items-baseline gap-2">
-                  <span className="text-[13.5px] font-medium">{book.title}</span>
-                  <span className="text-[11.5px] tabular-nums text-ink-faint">
+                  <span className="text-sm font-medium">{book.title}</span>
+                  <span className="text-2xs tnum text-ink-faint">
                     {notes.filter((n) => n.book_id === book.book_id).length} 条
                   </span>
                 </div>
@@ -441,9 +452,9 @@ export default function Report({ books, highlights, reviews }: Props) {
                         key={n.id}
                         className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-3"
                       >
-                        <div className="mb-1.5 flex items-center gap-2 text-[11.5px] text-ink-faint">
+                        <div className="mb-1.5 flex items-center gap-2 text-2xs text-ink-faint">
                           <span
-                            className={`rounded-md px-1.5 py-0.5 text-[11px] ${
+                            className={`rounded-md px-1.5 py-0.5 text-2xs ${
                               n.kind === 'mark'
                                 ? 'bg-brand-amber/[0.15] text-brand-amber'
                                 : 'bg-brand-purple/[0.15] text-brand-purple'
@@ -452,17 +463,17 @@ export default function Report({ books, highlights, reviews }: Props) {
                             {n.kind === 'mark' ? '划线' : '想法'}
                           </span>
                           {n.chapter_title && <span className="truncate">{n.chapter_title}</span>}
-                          <span className="ml-auto shrink-0 tabular-nums">
+                          <span className="ml-auto shrink-0 tnum">
                             {formatDate(n.create_time)}
                           </span>
                         </div>
                         {n.kind === 'thought' && n.abstract && (
-                          <div className="mb-2 border-l-2 border-ink-line2 pl-2.5 text-[12px] text-ink-faint">
+                          <div className="mb-2 border-l-2 border-ink-line2 pl-2.5 text-xs text-ink-faint">
                             {n.abstract}
                           </div>
                         )}
                         <div
-                          className={`text-[13.5px] leading-relaxed ${
+                          className={`text-sm leading-relaxed ${
                             n.kind === 'mark' ? 'text-ink-muted' : 'text-ink-txt'
                           }`}
                         >
@@ -485,21 +496,21 @@ function ReportBody({ content }: { content: ReportContent }) {
   // 模型有时自带书名号，剥掉再统一包裹，避免《《书名》》
   const stripBook = (s: string) => s.trim().replace(/^《+|》+$/g, '')
   return (
-    <div className="space-y-5">
-      <p className="text-[14px] leading-relaxed">{content.overview}</p>
+    <div className="prose-narrow space-y-5">
+      <p className="text-base leading-relaxed">{content.overview}</p>
 
       {content.rhythm && (
         <div>
-          <div className="mb-1.5 text-[12px] font-semibold tracking-wide text-brand-teal">
+          <div className="mb-1.5 text-xs font-semibold tracking-wide text-brand-teal">
             节奏观察
           </div>
-          <p className="text-[13.5px] leading-relaxed text-ink-muted">{content.rhythm}</p>
+          <p className="text-sm leading-relaxed text-ink-muted">{content.rhythm}</p>
         </div>
       )}
 
       {content.themes?.length > 0 && (
         <div>
-          <div className="mb-2 text-[12px] font-semibold tracking-wide text-brand-blue">
+          <div className="mb-2 text-xs font-semibold tracking-wide text-brand-blue">
             本期主题
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -508,8 +519,8 @@ function ReportBody({ content }: { content: ReportContent }) {
                 key={i}
                 className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-2.5"
               >
-                <div className="text-[13.5px] font-medium">{t.title}</div>
-                <div className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">{t.note}</div>
+                <div className="text-sm font-medium">{t.title}</div>
+                <div className="mt-1 text-xs leading-relaxed text-ink-muted">{t.note}</div>
               </div>
             ))}
           </div>
@@ -518,7 +529,7 @@ function ReportBody({ content }: { content: ReportContent }) {
 
       {content.picks?.length > 0 && (
         <div>
-          <div className="mb-2 text-[12px] font-semibold tracking-wide text-brand-amber">
+          <div className="mb-2 text-xs font-semibold tracking-wide text-brand-amber">
             精选笔记
           </div>
           <div className="space-y-2">
@@ -527,10 +538,10 @@ function ReportBody({ content }: { content: ReportContent }) {
                 key={i}
                 className="rounded-tile border border-ink-line bg-ink-surface2/50 px-3.5 py-3"
               >
-                <div className="border-l-2 border-brand-amber/60 pl-3 text-[13.5px] leading-relaxed">
+                <div className="border-l-2 border-brand-amber/60 pl-3 text-sm leading-relaxed">
                   {p.excerpt}
                 </div>
-                <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-[12px]">
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-xs">
                   <span className="font-medium text-ink-muted">《{stripBook(p.book)}》</span>
                   <span className="text-ink-faint">{p.why}</span>
                 </div>
@@ -542,10 +553,10 @@ function ReportBody({ content }: { content: ReportContent }) {
 
       {content.suggestion && (
         <div className="rounded-tile border border-brand-purple/30 bg-brand-purple/10 px-4 py-3">
-          <div className="mb-1 text-[12px] font-semibold tracking-wide text-brand-purple">
+          <div className="mb-1 text-xs font-semibold tracking-wide text-brand-purple">
             下期建议
           </div>
-          <p className="text-[13.5px] leading-relaxed">{content.suggestion}</p>
+          <p className="text-sm leading-relaxed">{content.suggestion}</p>
         </div>
       )}
     </div>

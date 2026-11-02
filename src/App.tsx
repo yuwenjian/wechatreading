@@ -17,14 +17,18 @@ import BookDetail from './pages/BookDetail'
 import Report from './pages/Report'
 import { formatDateTime } from './lib/format'
 import {
+  IconAlert,
   IconBack,
   IconLogo,
   IconLogout,
   IconReport,
+  IconRetry,
   IconShelf,
   IconStats,
   IconSync,
+  IllustEmptyBooks,
 } from './components/icons'
+import EmptyState from './components/EmptyState'
 
 type Tab = 'shelf' | 'report' | 'stats' | 'sync'
 
@@ -161,8 +165,8 @@ export default function App() {
             <IconLogo className="h-[22px] w-[22px]" />
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold leading-tight">阅读工作台</div>
-            <div className="mt-0.5 truncate text-[11.5px] text-ink-faint">WeChat Reading</div>
+            <div className="truncate text-base font-semibold leading-tight">阅读工作台</div>
+            <div className="mt-0.5 truncate text-2xs text-ink-faint">WeChat Reading</div>
           </div>
         </div>
 
@@ -178,7 +182,7 @@ export default function App() {
                 className={`flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-sm transition-colors duration-200 ease-app ${
                   on
                     ? 'bg-brand-500/[0.15] font-medium text-brand-blue'
-                    : 'text-ink-muted hover:bg-white/[.04] hover:text-ink-txt'
+                    : 'text-ink-muted hover:bg-ink-txt/[0.06] hover:text-ink-txt'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -190,11 +194,11 @@ export default function App() {
         </nav>
 
         <div className="border-t border-ink-line p-3">
-          <div className="mb-2 truncate px-2 text-[12px] text-ink-faint">{session.user.email}</div>
+          <div className="mb-2 truncate px-2 text-2xs text-ink-faint">{session.user.email}</div>
           <button
             type="button"
             onClick={() => void supabase?.auth.signOut()}
-            className="flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-sm text-ink-muted transition-colors duration-200 ease-app hover:bg-white/[.04] hover:text-ink-txt"
+            className="flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-sm text-ink-muted transition-colors duration-200 ease-app hover:bg-ink-txt/[0.06] hover:text-ink-txt"
           >
             <IconLogout className="h-[18px] w-[18px] shrink-0" />
             退出登录
@@ -210,7 +214,7 @@ export default function App() {
               type="button"
               onClick={() => gotoTab('shelf')}
               aria-label="返回书架"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-ink-txt active:bg-white/[.06]"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-ink-txt active:bg-ink-txt/[0.08]"
             >
               <IconBack className="h-5 w-5" />
             </button>
@@ -221,10 +225,10 @@ export default function App() {
           )}
 
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[16px] font-semibold leading-tight">
+            <div className="truncate text-lg font-semibold leading-tight">
               {isDetail ? '书籍详情' : page.title}
             </div>
-            <div className="truncate text-[11.5px] leading-tight text-ink-faint">
+            <div className="truncate text-2xs leading-tight text-ink-faint">
               {isDetail ? '书架' : page.sub}
             </div>
           </div>
@@ -233,7 +237,7 @@ export default function App() {
             type="button"
             onClick={() => void supabase?.auth.signOut()}
             aria-label="退出登录"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted active:bg-white/[.06]"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted active:bg-ink-txt/[0.08]"
           >
             <IconLogout className="h-[19px] w-[19px]" />
           </button>
@@ -246,24 +250,30 @@ export default function App() {
           {/* PC 页头 */}
           <div className="mb-6 hidden items-end justify-between gap-4 lg:flex">
             <div>
-              <h1 className="text-[22px] font-semibold leading-tight">
+              <h1 className="text-3xl font-semibold tracking-tight">
                 {isDetail ? '书籍详情' : page.title}
               </h1>
-              <p className="mt-1 text-[13px] text-ink-muted">
+              <p className="mt-1.5 text-sm text-ink-muted">
                 {isDetail ? '划线 · 想法 · AI 阅读分析' : page.sub}
               </p>
             </div>
             {exportedAt && (
-              <div className="shrink-0 rounded-full border border-ink-line bg-ink-surface px-3.5 py-1.5 text-[12px] text-ink-muted">
+              <div className="tnum shrink-0 rounded-full border border-ink-line bg-ink-surface px-3.5 py-1.5 text-2xs text-ink-muted">
                 数据导出于 {exportedAt}
               </div>
             )}
           </div>
 
           {error && (
-            <div className="hint mb-5 flex flex-wrap items-center justify-between gap-3 border-brand-coral/40 bg-brand-coral/10 text-[#ffb3b8]">
-              <span>{error}</span>
-              <button type="button" onClick={() => void loadAll()} className="btn btn-soft !min-h-[36px] !px-3 !text-[13px]">
+            <div className="hint mb-5 flex flex-wrap items-center gap-3 border-brand-coral/[0.4] bg-brand-coral/[0.1] text-brand-coral">
+              <IconAlert className="h-[18px] w-[18px] shrink-0" />
+              <span className="min-w-0 flex-1">{error}</span>
+              <button
+                type="button"
+                onClick={() => void loadAll()}
+                className="btn btn-soft !min-h-[36px] !px-3 !text-sm"
+              >
+                <IconRetry className="h-4 w-4" />
                 重试
               </button>
             </div>
@@ -273,8 +283,8 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="stat-card">
-                  <div className="h-7 w-20 animate-pulse rounded bg-white/[.06]" />
-                  <div className="mt-2 h-3 w-24 animate-pulse rounded bg-white/[.05]" />
+                  <div className="h-7 w-20 animate-pulse rounded bg-ink-txt/[0.07]" />
+                  <div className="mt-2 h-3 w-24 animate-pulse rounded bg-ink-txt/[0.05]" />
                 </div>
               ))}
             </div>
@@ -285,16 +295,17 @@ export default function App() {
               const book = books.find((b) => b.book_id === route.id)
               if (!book) {
                 return (
-                  <div className="empty">
-                    没有找到这本书
-                    <button
-                      type="button"
-                      onClick={() => gotoTab('shelf')}
-                      className="mt-3 block w-full text-brand-blue"
-                    >
-                      返回书架
-                    </button>
-                  </div>
+                  <EmptyState
+                    icon={<IllustEmptyBooks className="h-8 w-8" />}
+                    title="没有找到这本书"
+                    desc="它可能还没同步进来，或者链接已经失效。"
+                    action={
+                      <button type="button" onClick={() => gotoTab('shelf')} className="btn btn-soft">
+                        <IconBack className="h-4 w-4" />
+                        返回书架
+                      </button>
+                    }
+                  />
                 )
               }
               return (
@@ -323,7 +334,7 @@ export default function App() {
       </div>
 
       {/* ── 移动端：底部 Tab Bar ────────────────────────────────────── */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/95 pb-safe backdrop-blur-lg lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/[0.95] pb-safe backdrop-blur-lg lg:hidden">
         <div className="flex h-[62px] items-stretch">
           {TABS.map(({ key, short, Icon }) => {
             const on = tab === key && !isDetail
@@ -333,12 +344,12 @@ export default function App() {
                 type="button"
                 onClick={() => gotoTab(key)}
                 aria-current={on ? 'page' : undefined}
-                className={`flex flex-1 flex-col items-center justify-center gap-1 active:bg-white/[.04] ${
+                className={`flex flex-1 flex-col items-center justify-center gap-1.5 active:bg-ink-txt/[0.06] ${
                   on ? 'text-brand-blue' : 'text-ink-faint'
                 }`}
               >
                 <Icon className="h-[21px] w-[21px]" />
-                <span className="text-[11px] leading-none">{short}</span>
+                <span className="text-2xs leading-none">{short}</span>
               </button>
             )
           })}

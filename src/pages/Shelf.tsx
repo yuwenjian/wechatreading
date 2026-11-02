@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react'
 import StatNumber from '../components/StatNumber'
+import EmptyState from '../components/EmptyState'
+import ProgressRing from '../components/ProgressRing'
 import type { BookRow, HighlightRow, ReviewRow } from '../lib/types'
 import {
+  daysAgo,
   formatHoursCN,
   formatRating,
   groupCategory,
   groupNumber,
 } from '../lib/format'
-import { IconClock, IconIdea, IconQuote, IconStar } from '../components/icons'
+import { IconClock, IconIdea, IconNext, IconQuote, IconStar, IllustEmptyBooks } from '../components/icons'
 
 interface Props {
   books: BookRow[]
@@ -24,12 +27,31 @@ interface ShelfItem {
 
 const GROUPS = ['全部', '其他', '文学小说', '认知成长与管理', '金融理财'] as const
 
-/** 卡片强调色：轮换分配，保证网格里不单调 */
+/**
+ * 卡片强调色：轮换分配，让网格不至于呆板。
+ * 颜色统一取自 design token，避免硬编码色值。
+ */
 const ACCENTS = [
-  { css: '#6fa9fa', tw: 'text-brand-blue', soft: 'bg-brand-blue/[0.12]' },
-  { css: '#2dd4bf', tw: 'text-brand-teal', soft: 'bg-brand-teal/[0.12]' },
-  { css: '#f0b45f', tw: 'text-brand-amber', soft: 'bg-brand-amber/[0.12]' },
-  { css: '#b69bff', tw: 'text-brand-purple', soft: 'bg-brand-purple/[0.12]' },
+  {
+    grad: 'linear-gradient(90deg, oklch(var(--brand-400) / .45), oklch(var(--brand-400)))',
+    tw: 'text-brand-blue',
+    soft: 'bg-brand-blue/[0.14]',
+  },
+  {
+    grad: 'linear-gradient(90deg, oklch(var(--brand-teal) / .45), oklch(var(--brand-teal)))',
+    tw: 'text-brand-teal',
+    soft: 'bg-brand-teal/[0.14]',
+  },
+  {
+    grad: 'linear-gradient(90deg, oklch(var(--brand-amber) / .45), oklch(var(--brand-amber)))',
+    tw: 'text-brand-amber',
+    soft: 'bg-brand-amber/[0.14]',
+  },
+  {
+    grad: 'linear-gradient(90deg, oklch(var(--brand-purple) / .45), oklch(var(--brand-purple)))',
+    tw: 'text-brand-purple',
+    soft: 'bg-brand-purple/[0.14]',
+  },
 ]
 
 export default function Shelf({ books, highlights, reviews }: Props) {
@@ -92,14 +114,34 @@ export default function Shelf({ books, highlights, reviews }: Props) {
     { value: groupNumber(totalThoughts), label: '想法总数', tw: 'text-brand-purple' },
   ]
 
+  // 「在读」卡片：优先取没读完且最近有笔记的一本，用它打破均质网格
+  const focus = useMemo(() => {
+    const reading = list.filter((i) => Number(i.book.reading_progress ?? 0) < 100)
+    const pool = reading.length ? reading : list
+    return [...pool].sort((a, b) => {
+      const ta = Number(a.book.last_note_time ?? 0)
+      const tb = Number(b.book.last_note_time ?? 0)
+      return tb - ta
+    })[0]
+  }, [list])
+
+  const rest = useMemo(
+    () => (focus ? list.filter((i) => i.book.book_id !== focus.book.book_id) : list),
+    [list, focus],
+  )
+
+  function goDetail(id: string) {
+    window.location.hash = `#/book/${encodeURIComponent(id)}`
+  }
+
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* 顶部四格统计 */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="stat-card">
             <StatNumber text={s.value} className={s.tw} />
-            <div className="mt-2 text-[12.5px] text-ink-muted sm:text-[13px]">{s.label}</div>
+            <div className="mt-2 text-2xs text-ink-muted">{s.label}</div>
           </div>
         ))}
       </div>
@@ -118,52 +160,136 @@ export default function Shelf({ books, highlights, reviews }: Props) {
               className={`${isOn ? 'chip chip-on' : 'chip chip-off'} shrink-0`}
             >
               {g}
-              <span className={`tabular-nums text-[11.5px] ${isOn ? 'opacity-80' : 'text-ink-faint'}`}>
-                {n}
-              </span>
+              <span className={`tnum text-2xs ${isOn ? 'opacity-80' : 'text-ink-faint'}`}>{n}</span>
             </button>
           )
         })}
       </div>
 
-      {/* 书籍卡片 */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-        {list.map((it, idx) => (
-          <BookCard
-            key={it.book.book_id}
-            item={it}
-            accent={ACCENTS[idx % ACCENTS.length]}
-          />
-        ))}
-      </div>
+      {list.length === 0 ? (
+        <EmptyState
+          icon={<IllustEmptyBooks className="h-8 w-8" />}
+          title="这个分类下还没有带笔记的书"
+          desc="换个分类看看，或者到「同步」页拉一次最新数据。"
+        />
+      ) : (
+        <>
+          {/* 焦点卡：在读的那本，形状与下方网格区分开 */}
+          {focus && <FocusCard item={focus} onOpen={() => goDetail(focus.book.book_id)} />}
 
-      {list.length === 0 && <div className="empty">这个分类下还没有带笔记的书</div>}
+          {/* 书籍卡片 */}
+          <div className="stagger grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+            {rest.map((it, idx) => (
+              <BookCard
+                key={it.book.book_id}
+                item={it}
+                accent={ACCENTS[idx % ACCENTS.length]}
+                onOpen={() => goDetail(it.book.book_id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
+  )
+}
+
+function FocusCard({ item, onOpen }: { item: ShelfItem; onOpen: () => void }) {
+  const { book, marks, thoughts } = item
+  const pct = Math.min(100, Number(book.reading_progress ?? 0))
+  const lastNote = Number(book.last_note_time ?? 0)
+
+  return (
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+      className="group relative cursor-pointer overflow-hidden rounded-card border border-ink-line bg-ink-surface shadow-card transition-[transform,border-color] duration-200 ease-app hover:border-ink-line2 active:scale-[0.995]"
+    >
+      {/* 右上角光晕：给焦点卡一点纵深，不使用渐变文字或条纹 */}
+      <div
+        className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full opacity-40 blur-2xl"
+        style={{ background: 'radial-gradient(circle, oklch(var(--brand-500) / .35), transparent 70%)' }}
+      />
+
+      <div className="relative flex gap-4 p-4 sm:gap-5 sm:p-5">
+        {book.cover_url ? (
+          <img
+            src={book.cover_url}
+            alt=""
+            loading="lazy"
+            className="h-[128px] w-[92px] shrink-0 rounded-tile border border-ink-line object-cover"
+          />
+        ) : (
+          <div className="flex h-[128px] w-[92px] shrink-0 items-center justify-center rounded-tile border border-ink-line bg-ink-surface2 text-2xs text-ink-faint">
+            无封面
+          </div>
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded-full bg-brand-blue/[0.14] px-2.5 py-[3px] text-2xs font-medium text-brand-blue">
+              {pct >= 100 ? '最近读完' : '正在读'}
+            </span>
+            {lastNote > 0 && (
+              <span className="text-2xs text-ink-faint">最近笔记 {daysAgo(lastNote)}</span>
+            )}
+          </div>
+
+          <h3 className="line-clamp-2 text-xl font-semibold leading-snug">{book.title}</h3>
+          <p className="mt-1 truncate text-sm text-ink-muted">
+            {[book.author, book.translator].filter(Boolean).join(' · ') || '—'}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-2xs text-ink-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <IconQuote className="h-4 w-4 text-brand-amber" />
+              <span className="tnum font-medium">{marks.length}</span> 划线
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <IconIdea className="h-4 w-4 text-brand-purple" />
+              <span className="tnum font-medium">{thoughts.length}</span> 想法
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <IconClock className="h-4 w-4 text-brand-teal" />
+              <span className="tnum">{formatHoursCN(book.reading_time)}</span>
+            </span>
+          </div>
+
+          <div className="mt-auto flex items-center justify-between gap-4 pt-4">
+            <span className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors group-hover:text-brand-blue">
+              查看 {marks.length + thoughts.length} 条笔记
+              <IconNext className="h-4 w-4" />
+            </span>
+            <ProgressRing value={pct} size={64} stroke={5} />
+          </div>
+        </div>
+      </div>
+    </article>
   )
 }
 
 function BookCard({
   item,
   accent,
+  onOpen,
 }: {
   item: ShelfItem
   accent: (typeof ACCENTS)[number]
+  onOpen: () => void
 }) {
   const { book, marks, thoughts, group } = item
   const pct = Math.min(100, Number(book.reading_progress ?? 0))
   const rating = formatRating(book.rating)
 
-  function goDetail() {
-    window.location.hash = `#/book/${encodeURIComponent(book.book_id)}`
-  }
-
   return (
     <article
       role="link"
       tabIndex={0}
-      onClick={goDetail}
-      onKeyDown={(e) => e.key === 'Enter' && goDetail()}
-      className="group flex cursor-pointer gap-3.5 rounded-card border border-ink-line bg-ink-surface p-3.5 shadow-card transition-[transform,border-color,box-shadow] duration-200 ease-app active:scale-[.985] hover:border-ink-line2 hover:shadow-pop sm:p-4"
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+      className="group row-tap flex cursor-pointer gap-3.5 rounded-card border border-ink-line bg-ink-surface p-3.5 shadow-card hover:shadow-pop sm:p-4"
     >
       {/* 封面 */}
       <div className="relative shrink-0">
@@ -172,15 +298,15 @@ function BookCard({
             src={book.cover_url}
             alt=""
             loading="lazy"
-            className="h-[92px] w-[68px] rounded-[10px] border border-ink-line object-cover"
+            className="h-[96px] w-[70px] rounded-tile border border-ink-line object-cover"
           />
         ) : (
-          <div className="flex h-[92px] w-[68px] items-center justify-center rounded-[10px] border border-ink-line bg-ink-surface2 text-[11px] text-ink-faint">
+          <div className="flex h-[96px] w-[70px] items-center justify-center rounded-tile border border-ink-line bg-ink-surface2 text-2xs text-ink-faint">
             无封面
           </div>
         )}
         {pct >= 100 && (
-          <span className="absolute -right-1.5 -top-1.5 rounded-full bg-brand-teal px-1.5 py-[2px] text-[10px] font-medium text-[#06231d]">
+          <span className="absolute -right-1.5 -top-1.5 rounded-full bg-brand-teal px-1.5 py-[2px] text-[10px] font-medium text-ink-bg">
             读完
           </span>
         )}
@@ -188,30 +314,28 @@ function BookCard({
 
       {/* 信息 */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug">{book.title}</h3>
-        <p className="mt-0.5 truncate text-[12.5px] text-ink-muted">
+        <h3 className="line-clamp-2 text-base font-semibold leading-snug">{book.title}</h3>
+        <p className="mt-0.5 truncate text-2xs text-ink-muted">
           {[book.author, book.translator].filter(Boolean).join(' · ') || '—'}
         </p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs">
           <span className="inline-flex items-center gap-1 text-ink-muted">
             <IconQuote className={`h-3.5 w-3.5 ${accent.tw}`} />
-            <span className={`font-medium tabular-nums ${accent.tw}`}>{marks.length}</span>
-            划线
+            <span className={`tnum font-medium ${accent.tw}`}>{marks.length}</span>
           </span>
           <span className="inline-flex items-center gap-1 text-ink-muted">
             <IconIdea className="h-3.5 w-3.5 text-brand-purple" />
-            <span className="font-medium tabular-nums text-brand-purple">{thoughts.length}</span>
-            想法
+            <span className="tnum font-medium text-brand-purple">{thoughts.length}</span>
           </span>
           <span className="inline-flex items-center gap-1 text-ink-muted">
             <IconClock className="h-3.5 w-3.5 text-brand-teal" />
-            <span className="tabular-nums">{formatHoursCN(book.reading_time)}</span>
+            <span className="tnum">{formatHoursCN(book.reading_time)}</span>
           </span>
           {rating && (
             <span className="inline-flex items-center gap-1 text-ink-muted">
               <IconStar className="h-3.5 w-3.5 text-brand-amber" />
-              <span className="tabular-nums">{rating}</span>
+              <span className="tnum">{rating}</span>
             </span>
           )}
         </div>
@@ -222,19 +346,16 @@ function BookCard({
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-surface2">
               <div
                 className="h-full rounded-full transition-[width] duration-300 ease-app"
-                style={{
-                  width: `${pct}%`,
-                  background: `linear-gradient(90deg, ${accent.css}99, ${accent.css})`,
-                }}
+                style={{ width: `${pct}%`, background: accent.grad }}
               />
             </div>
-            <span className="shrink-0 text-[11.5px] tabular-nums text-ink-faint">{pct}%</span>
+            <span className="tnum shrink-0 text-2xs text-ink-faint">{pct}%</span>
           </div>
-          <div className="mt-1.5 flex items-center justify-between text-[11.5px]">
+          <div className="mt-2 flex items-center justify-between gap-2 text-2xs">
             <span className={`rounded-md px-1.5 py-0.5 ${accent.soft} ${accent.tw}`}>{group}</span>
             {(marks.length > 0 || thoughts.length > 0) && (
-              <span className="text-ink-faint transition-colors group-hover:text-brand-blue">
-                {marks.length + thoughts.length} 条笔记 →
+              <span className="shrink-0 text-ink-faint transition-colors group-hover:text-brand-blue">
+                {marks.length + thoughts.length} 条笔记
               </span>
             )}
           </div>

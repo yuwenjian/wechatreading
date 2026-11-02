@@ -4,7 +4,8 @@ import { useSync } from '../hooks/useSync'
 import type { SyncTask } from '../lib/types'
 import { formatDateTime } from '../lib/format'
 import Hint from '../components/Hint'
-import { IconSpark, IconSync } from '../components/icons'
+import EmptyState from '../components/EmptyState'
+import { IconSpark, IconSync, IllustEmptySync } from '../components/icons'
 
 type Props = { onDataChanged: () => void }
 
@@ -224,7 +225,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
               <IconSync className="mr-1.5 h-4 w-4 text-brand-blue" />
               数据同步
             </h2>
-            <p className="mt-1.5 max-w-[520px] text-[12.5px] leading-relaxed text-ink-muted">
+            <p className="mt-1.5 max-w-[520px] text-xs leading-relaxed text-ink-muted">
               只会拉取「笔记计数有变化」的书。首次全量约 15 本、60 余次请求，因此按每批 4
               本分批执行，中断后重跑不会丢进度、也不会产生重复数据。
             </p>
@@ -255,7 +256,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
                 style={{ width: `${Math.max(progress, busy ? 4 : 0)}%` }}
               />
             </div>
-            <div className="mt-2 flex items-center justify-between text-[12px] text-ink-faint tabular-nums">
+            <div className="mt-2 flex items-center justify-between text-xs text-ink-faint tnum">
               <span className="truncate pr-3">{message || '准备中…'}</span>
               <span className="shrink-0">{progress}%</span>
             </div>
@@ -281,7 +282,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
         <section className="card card-pad">
           <h2 className="section-title">封面镜像</h2>
-          <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-muted">
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
             把封面从微信读书 CDN 搬到自己的 Supabase Storage，页面就不再受第三方可用性影响。
             同步流程会顺带做，这里的按钮负责补齐历史上漏掉的。
           </p>
@@ -309,7 +310,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
             <IconSpark className="mr-1.5 h-4 w-4 text-brand-purple" />
             AI 分析
           </h2>
-          <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-muted">
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
             按「划线条数水位线」判断哪些书需要（重新）生成分析 —— 划线没变的书不会重复调用模型。
           </p>
 
@@ -324,7 +325,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
             </button>
 
             {analysis.enabled && !analysis.running && analysis.pending > 0 && (
-              <span className="text-[12.5px] text-ink-faint tabular-nums">
+              <span className="text-xs text-ink-faint tnum">
                 待分析 {analysis.pending} 本
               </span>
             )}
@@ -338,14 +339,17 @@ export default function SyncPanel({ onDataChanged }: Props) {
         </section>
       </div>
 
-      <section className="card card-pad">
-        <h2 className="section-title mb-4">同步记录</h2>
-
-        {historyError && <Hint text={historyError} tone="risk" />}
-        {!historyError && history.length === 0 && <Hint text="还没有同步记录。" />}
-
-        {history.length > 0 && (
-          <>
+      {historyError ? (
+        <Hint text={historyError} tone="risk" />
+      ) : history.length === 0 ? (
+        <EmptyState
+          icon={<IllustEmptySync className="h-8 w-8" />}
+          title="还没有同步记录"
+          desc="点上面的「开始同步」拉第一次数据，之后每次同步的明细都会留在这里。"
+        />
+      ) : (
+        <section className="card card-pad">
+          <h2 className="section-title mb-4">同步记录</h2>
             {/* 移动端：卡片流，避免横向滚动 */}
             <ul className="space-y-2.5 md:hidden">
               {history.map((t) => (
@@ -354,16 +358,16 @@ export default function SyncPanel({ onDataChanged }: Props) {
                   className="rounded-tile border border-ink-line bg-ink-surface2/50 p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12.5px] tabular-nums text-ink-muted">
+                    <span className="text-xs tnum text-ink-muted">
                       {formatDateTime(t.started_at)}
                     </span>
                     <StatusTag status={t.status} failed={t.failed_book_ids?.length ?? 0} />
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-muted">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
                     <span>{t.trigger_source === 'cron' ? '定时' : '手动'}触发</span>
-                    <span className="tabular-nums">书目 {t.books_total ?? 0}</span>
-                    <span className="tabular-nums">变化 {t.books_changed ?? 0}</span>
-                    <span className="tabular-nums">
+                    <span className="tnum">书目 {t.books_total ?? 0}</span>
+                    <span className="tnum">变化 {t.books_changed ?? 0}</span>
+                    <span className="tnum">
                       {t.finished_at ? `耗时 ${elapsed(t.started_at, t.finished_at)} 秒` : '进行中'}
                     </span>
                   </div>
@@ -373,7 +377,7 @@ export default function SyncPanel({ onDataChanged }: Props) {
 
             {/* PC：表格 */}
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full text-[12.5px]">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-ink-line text-left text-ink-faint">
                     <th className="py-2.5 pr-3 font-normal">开始时间</th>
@@ -386,21 +390,21 @@ export default function SyncPanel({ onDataChanged }: Props) {
                 </thead>
                 <tbody className="divide-y divide-ink-line">
                   {history.map((t) => (
-                    <tr key={t.task_id} className="transition-colors hover:bg-white/[.03]">
-                      <td className="py-3 pr-3 tabular-nums text-ink-muted">
+                    <tr key={t.task_id} className="transition-colors hover:bg-ink-txt/[0.03]">
+                      <td className="py-3 pr-3 tnum text-ink-muted">
                         {formatDateTime(t.started_at)}
                       </td>
                       <td className="py-3 pr-3 text-ink-muted">
                         {t.trigger_source === 'cron' ? '定时' : '手动'}
                       </td>
-                      <td className="py-3 pr-3 tabular-nums text-ink-muted">{t.books_total ?? 0}</td>
-                      <td className="py-3 pr-3 tabular-nums text-ink-muted">
+                      <td className="py-3 pr-3 tnum text-ink-muted">{t.books_total ?? 0}</td>
+                      <td className="py-3 pr-3 tnum text-ink-muted">
                         {t.books_changed ?? 0}
                       </td>
                       <td className="py-3 pr-3">
                         <StatusTag status={t.status} failed={t.failed_book_ids?.length ?? 0} />
                       </td>
-                      <td className="py-3 tabular-nums text-ink-muted">
+                      <td className="py-3 tnum text-ink-muted">
                         {t.finished_at ? `${elapsed(t.started_at, t.finished_at)} 秒` : '进行中'}
                       </td>
                     </tr>
@@ -408,9 +412,8 @@ export default function SyncPanel({ onDataChanged }: Props) {
                 </tbody>
               </table>
             </div>
-          </>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   )
 }
@@ -423,8 +426,8 @@ function elapsed(start: string, end: string): number {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-tile border border-ink-line bg-ink-surface2 px-3.5 py-2.5">
-      <div className="text-[11.5px] text-ink-faint">{label}</div>
-      <div className="mt-0.5 text-[15px] font-medium tabular-nums">{value}</div>
+      <div className="text-2xs text-ink-faint">{label}</div>
+      <div className="mt-0.5 text-base font-medium tnum">{value}</div>
     </div>
   )
 }
@@ -441,7 +444,7 @@ function StatusTag({ status, failed }: { status: string; failed: number }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[11.5px] ${tone}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-2xs ${tone}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       {text}

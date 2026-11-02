@@ -53,15 +53,20 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 py-10 pt-safe pb-safe">
-      <div className="w-full max-w-[400px]">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10 pt-safe pb-safe">
+      {/* 背景光晕：登录页唯一的大面积装饰，保持克制 */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 opacity-25 blur-3xl"
+        style={{ background: 'radial-gradient(ellipse at center, oklch(var(--brand-500) / .5), transparent 65%)' }}
+      />
+      <div className="relative w-full max-w-[400px]">
         {/* 品牌区 */}
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-brand-500/[0.15] text-brand-blue shadow-glow">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-brand-500/[0.16] text-brand-blue shadow-glow">
             <IconLogo className="h-8 w-8" />
           </div>
-          <h1 className="mt-4 text-[20px] font-semibold">我的阅读工作台</h1>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">我的阅读工作台</h1>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
             私人数据空间，登录后查看你的划线与想法
           </p>
         </div>
@@ -69,12 +74,12 @@ export default function Login() {
         <form onSubmit={submit} className="card card-pad space-y-3.5">
           {FIXED_EMAIL ? (
             <div className="flex items-center justify-between rounded-tile border border-ink-line bg-ink-surface2 px-3.5 py-2.5">
-              <span className="text-[12.5px] text-ink-muted">账号</span>
-              <span className="truncate pl-3 text-[13.5px]">{FIXED_EMAIL}</span>
+              <span className="text-xs text-ink-muted">账号</span>
+              <span className="truncate pl-3 text-sm">{FIXED_EMAIL}</span>
             </div>
           ) : (
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-[12.5px] text-ink-muted">
+              <label htmlFor="email" className="mb-1.5 block text-xs text-ink-muted">
                 账号邮箱
               </label>
               <input
@@ -91,7 +96,7 @@ export default function Login() {
           )}
 
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-[12.5px] text-ink-muted">
+            <label htmlFor="password" className="mb-1.5 block text-xs text-ink-muted">
               密码
             </label>
             <input
@@ -113,14 +118,14 @@ export default function Login() {
           {error && (
             <p
               role="alert"
-              className="hint border-brand-coral/40 bg-brand-coral/10 !py-2.5 text-[#ffb3b8]"
+              className="hint border-brand-coral/40 bg-brand-coral/10 !py-2.5 text-brand-coral"
             >
               {error}
             </p>
           )}
         </form>
 
-        <p className="mt-4 text-center text-[11.5px] leading-relaxed text-ink-faint">
+        <p className="mt-4 text-center text-2xs leading-relaxed text-ink-faint">
           数据存放在你自己的 Supabase 项目里，通过行级安全策略限制为仅白名单账号可读。
           <br />
           忘记密码时在项目目录执行{' '}
