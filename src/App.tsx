@@ -334,8 +334,8 @@ export default function App() {
       </div>
 
       {/* ── 移动端：底部 Tab Bar ────────────────────────────────────── */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-ink-surface/[0.95] pb-safe shadow-[0_-10px_30px_-22px_oklch(0.45_0.03_200_/_0.35)] backdrop-blur-lg lg:hidden">
-        <div className="flex h-[62px] items-stretch">
+      <nav className="glass-bar fixed inset-x-0 bottom-0 z-40 pb-safe lg:hidden">
+        <div className="flex items-stretch gap-1.5 px-2 py-1.5">
           {TABS.map(({ key, short, Icon }) => {
             const on = tab === key && !isDetail
             return (
@@ -344,9 +344,7 @@ export default function App() {
                 type="button"
                 onClick={() => gotoTab(key)}
                 aria-current={on ? 'page' : undefined}
-                className={`flex flex-1 flex-col items-center justify-center gap-1.5 active:bg-ink-txt/[0.06] ${
-                  on ? 'text-brand-blue' : 'text-ink-faint'
-                }`}
+                className={`glass-tab ${on ? 'glass-tab-on' : ''}`}
               >
                 <Icon className="h-[21px] w-[21px]" />
                 <span className="text-2xs leading-none">{short}</span>
