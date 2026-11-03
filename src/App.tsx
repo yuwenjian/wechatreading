@@ -53,7 +53,7 @@ const TABS: { key: Tab; label: string; short: string; Icon: typeof IconShelf }[]
 ]
 
 const PAGE_TITLE: Record<Tab, { title: string; sub: string }> = {
-  shelf: { title: '书架', sub: '划线与想法 · 来自微信读书' },
+  shelf: { title: '书架', sub: '在读书目 · 划线与想法 · 来自微信读书' },
   report: { title: '阅读报告', sub: '周期复盘 · 来自微信读书' },
   stats: { title: '阅读统计', sub: '阅读时长 · 偏好分析 · 来自微信读书' },
   sync: { title: '同步', sub: '数据同步 · 来自微信读书' },

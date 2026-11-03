@@ -1,7 +1,7 @@
 # 我的阅读工作台 · 微信读书数据应用
 
 把微信读书的书架、划线、想法、阅读统计同步到自己的 Supabase，用一个自托管的 Web 应用随时查看。
-支持增量同步：只拉「笔记计数有变化」的书。
+支持增量同步：书目来自「书架 + 有笔记的书」，只拉发生变化的那几本（无笔记的在读书同样会入库）。
 
 技术栈按 `family-meal-planner` 的约定来：**Vite + React 18 + TypeScript + Tailwind + Supabase + Vercel Serverless Functions**。
 

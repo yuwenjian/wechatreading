@@ -18,8 +18,10 @@ import {
   fetchBookDetail,
   fetchReadStats,
   listNotebooks,
+  listShelf,
   type Chapter,
   type NotebookBook,
+  type ShelfBook,
 } from "./weread.js";
 
 type Json = Record<string, any>;
@@ -47,6 +49,23 @@ export function toIdentityRow(b: NotebookBook): Json {
     category: meta.categories?.[0]?.title ?? null,
     reader_link: meta.readerLink ?? null,
     deep_link: meta.deepLink ?? null,
+  };
+}
+
+/**
+ * 书架书的身份行：字段来自 /shelf/sync（分类是扁平字符串、没有笔记计数）。
+ * 同样不写计数与进度，交给 syncOneBook 成功后再落。
+ */
+export function shelfToIdentityRow(b: ShelfBook): Json {
+  return {
+    book_id: b.bookId,
+    title: b.title ?? "（无标题）",
+    author: b.author ?? null,
+    cover_url: b.cover ?? null,
+    cover_source_url: b.cover ?? null,
+    category: b.category ?? null,
+    reader_link: b.readerLink ?? null,
+    deep_link: b.deepLink ?? null,
   };
 }
 
@@ -111,6 +130,8 @@ export type BookCounters = {
   review_count: number | null;
   bookmark_count: number | null;
   last_note_time: number | null;
+  /** 上次明细同步完成时间：用来判断"同步之后是否又读过"，从而决定要不要重拉进度 */
+  last_synced_at?: string | null;
 };
 
 /**
@@ -143,12 +164,26 @@ export function findChangedBooks(existing: BookCounters[], incoming: NotebookBoo
 // ── 入库 ────────────────────────────────────────────────────────────────────
 
 /**
+ * 列表页带回来的计数。notebooks 的书这些字段齐全；
+ * 书架书（无笔记）没有计数，传入的对象只可能是空/缺字段 —— 因此逐字段判断，
+ * 缺哪个就不写哪个，绝不能拿 0 覆盖库里已有的计数。
+ */
+export type SyncCounters = {
+  noteCount?: number;
+  reviewCount?: number;
+  bookmarkCount?: number;
+  sort?: number;
+  readingProgress?: number;
+  cover?: string;
+};
+
+/**
  * 拉取单本明细并幂等入库。
  * counters 传入时，成功后才写回计数（失败则不写，保留重试机会）。
  */
 export async function syncOneBook(
   bookId: string,
-  counters?: NotebookBook,
+  counters?: SyncCounters,
 ): Promise<{ highlights: number; reviews: number }> {
   const db = admin();
   const detail = await fetchBookDetail(bookId);
@@ -183,16 +218,18 @@ export async function syncOneBook(
     updated_at: now,
   };
 
-  // 计数与列表页元数据在成功路径上写回
+  // 计数与列表页元数据在成功路径上写回（逐字段判断，缺字段不覆盖）
   if (counters) {
-    patch.note_count = Number(counters.noteCount ?? 0);
-    patch.review_count = Number(counters.reviewCount ?? 0);
-    patch.bookmark_count = Number(counters.bookmarkCount ?? 0);
-    patch.last_note_time = Number(counters.sort ?? 0);
-    patch.reading_progress = Number(counters.readingProgress ?? patch.reading_progress ?? 0);
-    if (counters.book?.cover) {
-      patch.cover_url = counters.book.cover;
-      patch.cover_source_url = counters.book.cover;
+    if (counters.noteCount !== undefined) patch.note_count = Number(counters.noteCount ?? 0);
+    if (counters.reviewCount !== undefined) patch.review_count = Number(counters.reviewCount ?? 0);
+    if (counters.bookmarkCount !== undefined) patch.bookmark_count = Number(counters.bookmarkCount ?? 0);
+    if (counters.sort !== undefined) patch.last_note_time = Number(counters.sort ?? 0);
+    if (counters.readingProgress !== undefined) {
+      patch.reading_progress = Number(counters.readingProgress ?? 0);
+    }
+    if (counters.cover) {
+      patch.cover_url = counters.cover;
+      patch.cover_source_url = counters.cover;
     }
   }
 
@@ -284,32 +321,68 @@ export async function syncStats(): Promise<{ totalReadTime: number }> {
  */
 export async function prepareSync() {
   const db = admin();
-  const notebooks = await listNotebooks();
+
+  // 两个书目来源并行拉：notebooks 有笔记计数但只有"有笔记的书"，
+  // shelf 覆盖"在读但没有笔记"的书（正是用户会疑惑"同步漏了"的那类）。
+  const [notebooks, shelf] = await Promise.all([listNotebooks(), listShelf()]);
 
   const { data: existing, error } = await db
     .from("wr_books")
-    .select("book_id, note_count, review_count, bookmark_count, last_note_time");
+    .select("book_id, note_count, review_count, bookmark_count, last_note_time, last_synced_at");
   if (error) throw new Error(`读取现有书目失败：${error.message}`);
 
   const existingRows = (existing ?? []) as BookCounters[];
-  const changed = findChangedBooks(existingRows, notebooks.books);
+  const known = new Map(existingRows.map((e) => [e.book_id, e]));
 
-  const known = new Set(existingRows.map((e) => e.book_id));
-  const newBooks = notebooks.books.filter((b) => !known.has(b.bookId));
-  if (newBooks.length > 0) {
+  // 1) 计数判据：笔记/想法/书签数或最近笔记时间变了，或出现新书
+  const changed = new Set(findChangedBooks(existingRows, notebooks.books));
+
+  // 2) 新书的身份行：notebooks 优先（字段更全），书架补充无笔记的书；两边去重
+  const notebookNew = notebooks.books.filter((b) => !known.has(b.bookId));
+  const notebookNewIds = new Set(notebookNew.map((b) => b.bookId));
+  const shelfNew = shelf.filter((b) => !known.has(b.bookId) && !notebookNewIds.has(b.bookId));
+
+  const identityRows: Json[] = [
+    ...notebookNew.map(toIdentityRow),
+    ...shelfNew.map(shelfToIdentityRow),
+  ];
+  if (identityRows.length > 0) {
     // 先落地身份行：划线/想法有外键指向 wr_books，新书必须先存在
-    const { error: insErr } = await db.from("wr_books").insert(newBooks.map(toIdentityRow));
+    const { error: insErr } = await db.from("wr_books").insert(identityRows);
     if (insErr) throw new Error(`写入新书目失败：${insErr.message}`);
   }
 
-  // 计数表交给调用方：成功同步后用它的计数写回判据
-  const countersById = new Map<string, NotebookBook>();
-  for (const b of notebooks.books) countersById.set(b.bookId, b);
+  // 3) 新书一律排队拉明细（新入库的书还没有进度/简介/封面镜像）
+  for (const b of notebookNew) changed.add(b.bookId);
+  for (const b of shelfNew) changed.add(b.bookId);
+
+  // 4) 已在库的书：若「最后阅读时间」晚于上次同步完成时间，说明同步后又读过，
+  //    阅读进度/时长可能变了，重新拉一次（书架书没有笔记计数，只能靠时间判据）。
+  for (const b of shelf) {
+    const prev = known.get(b.bookId);
+    if (!prev || notebookNewIds.has(b.bookId)) continue;
+    const readMs = Number(b.readUpdateTime ?? 0) * 1000;
+    const syncedMs = prev.last_synced_at ? Date.parse(prev.last_synced_at) : 0;
+    if (readMs > 0 && readMs > syncedMs) changed.add(b.bookId);
+  }
+
+  // 计数表交给调用方：成功同步后用它的计数写回判据（书架书没有计数，取不到即不写）
+  const countersById = new Map<string, SyncCounters>();
+  for (const b of notebooks.books) {
+    countersById.set(b.bookId, {
+      noteCount: b.noteCount,
+      reviewCount: b.reviewCount,
+      bookmarkCount: b.bookmarkCount,
+      sort: b.sort,
+      readingProgress: b.readingProgress,
+      cover: b.book?.cover,
+    });
+  }
 
   return {
-    booksTotal: notebooks.books.length,
+    booksTotal: existingRows.length + identityRows.length,
     notesTotal: notebooks.totalNoteCount,
-    changed,
+    changed: [...changed],
     countersById,
   };
 }

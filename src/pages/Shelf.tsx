@@ -57,9 +57,9 @@ const ACCENTS = [
 export default function Shelf({ books, highlights, reviews }: Props) {
   const [active, setActive] = useState<string>('全部')
 
-  // 按 bookId 索引划线/想法；只保留有笔记的书
-  // 注意：note_count 是「划线数」、review_count 是「想法数」，
-  // 只写想法、零划线的书（如《三体》）也必须有笔记，两个计数任一 >0 即保留
+  // 按 bookId 索引划线/想法。
+  // 展示 wr_books 全量：最近在读、但还没划线/想法的书（比如《缠论》）
+  // 同步后同样是书架的一部分，不该因为「零笔记」被藏起来 —— 只是卡片上没有笔记数。
   const items = useMemo<ShelfItem[]>(() => {
     const markMap = new Map<string, HighlightRow[]>()
     for (const h of highlights) {
@@ -74,7 +74,6 @@ export default function Shelf({ books, highlights, reviews }: Props) {
       reviewMap.set(r.book_id, arr)
     }
     return books
-      .filter((b) => Number(b.note_count) > 0 || Number(b.review_count) > 0)
       .map((book) => ({
         book,
         marks: (markMap.get(book.book_id) ?? []).sort(
@@ -85,7 +84,12 @@ export default function Shelf({ books, highlights, reviews }: Props) {
         ),
         group: groupCategory(book.category),
       }))
-      .sort((a, b) => b.marks.length - a.marks.length)
+      .sort((a, b) => {
+        const na = a.marks.length + a.thoughts.length
+        const nb = b.marks.length + b.thoughts.length
+        if (nb !== na) return nb - na
+        return Number(b.book.last_note_time ?? 0) - Number(a.book.last_note_time ?? 0)
+      })
   }, [books, highlights, reviews])
 
   // 分组计数
@@ -108,7 +112,7 @@ export default function Shelf({ books, highlights, reviews }: Props) {
   const totalThoughts = items.reduce((s, i) => s + i.thoughts.length, 0)
 
   const stats = [
-    { value: String(items.length), label: '有笔记的书', tw: 'text-brand-blue' },
+    { value: String(items.length), label: '书架上的书', tw: 'text-brand-blue' },
     { value: formatHoursCN(totalHours), label: '这批书累计耗时', tw: 'text-brand-teal' },
     { value: groupNumber(totalMarks), label: '划线总数', tw: 'text-brand-amber' },
     { value: groupNumber(totalThoughts), label: '想法总数', tw: 'text-brand-purple' },
@@ -169,7 +173,7 @@ export default function Shelf({ books, highlights, reviews }: Props) {
       {list.length === 0 ? (
         <EmptyState
           icon={<IllustEmptyBooks className="h-8 w-8" />}
-          title="这个分类下还没有带笔记的书"
+          title="这个分类下还没有书"
           desc="换个分类看看，或者到「同步」页拉一次最新数据。"
         />
       ) : (
@@ -243,23 +247,30 @@ function FocusCard({ item, onOpen }: { item: ShelfItem; onOpen: () => void }) {
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-2xs text-ink-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <IconQuote className="h-4 w-4 text-brand-amber" />
-              <span className="tnum font-medium">{marks.length}</span> 划线
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <IconIdea className="h-4 w-4 text-brand-purple" />
-              <span className="tnum font-medium">{thoughts.length}</span> 想法
-            </span>
+            {marks.length > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <IconQuote className="h-4 w-4 text-brand-amber" />
+                <span className="tnum font-medium">{marks.length}</span> 划线
+              </span>
+            )}
+            {thoughts.length > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <IconIdea className="h-4 w-4 text-brand-purple" />
+                <span className="tnum font-medium">{thoughts.length}</span> 想法
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5">
               <IconClock className="h-4 w-4 text-brand-teal" />
               <span className="tnum">{formatHoursCN(book.reading_time)}</span>
             </span>
+            {marks.length + thoughts.length === 0 && <span>还没有笔记</span>}
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-4 pt-4">
             <span className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors group-hover:text-brand-blue">
-              查看 {marks.length + thoughts.length} 条笔记
+              {marks.length + thoughts.length > 0
+                ? `查看 ${marks.length + thoughts.length} 条笔记`
+                : '查看详情'}
               <IconNext className="h-4 w-4" />
             </span>
             <ProgressRing value={pct} size={64} stroke={5} />
@@ -320,14 +331,18 @@ function BookCard({
         </p>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs">
-          <span className="inline-flex items-center gap-1 text-ink-muted">
-            <IconQuote className={`h-3.5 w-3.5 ${accent.tw}`} />
-            <span className={`tnum font-medium ${accent.tw}`}>{marks.length}</span>
-          </span>
-          <span className="inline-flex items-center gap-1 text-ink-muted">
-            <IconIdea className="h-3.5 w-3.5 text-brand-purple" />
-            <span className="tnum font-medium text-brand-purple">{thoughts.length}</span>
-          </span>
+          {marks.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-ink-muted">
+              <IconQuote className={`h-3.5 w-3.5 ${accent.tw}`} />
+              <span className={`tnum font-medium ${accent.tw}`}>{marks.length}</span>
+            </span>
+          )}
+          {thoughts.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-ink-muted">
+              <IconIdea className="h-3.5 w-3.5 text-brand-purple" />
+              <span className="tnum font-medium text-brand-purple">{thoughts.length}</span>
+            </span>
+          )}
           <span className="inline-flex items-center gap-1 text-ink-muted">
             <IconClock className="h-3.5 w-3.5 text-brand-teal" />
             <span className="tnum">{formatHoursCN(book.reading_time)}</span>
@@ -349,15 +364,17 @@ function BookCard({
                 style={{ width: `${pct}%`, background: accent.grad }}
               />
             </div>
-            <span className="tnum shrink-0 text-2xs text-ink-faint">{pct}%</span>
+            <span className="tnum shrink-0 text-2xs text-ink-faint">
+              {pct > 0 ? `${pct}%` : '—'}
+            </span>
           </div>
           <div className="mt-2 flex items-center justify-between gap-2 text-2xs">
             <span className={`rounded-md px-1.5 py-0.5 ${accent.soft} ${accent.tw}`}>{group}</span>
-            {(marks.length > 0 || thoughts.length > 0) && (
-              <span className="shrink-0 text-ink-faint transition-colors group-hover:text-brand-blue">
-                {marks.length + thoughts.length} 条笔记
-              </span>
-            )}
+            <span className="shrink-0 text-ink-faint transition-colors group-hover:text-brand-blue">
+              {marks.length + thoughts.length > 0
+                ? `${marks.length + thoughts.length} 条笔记`
+                : '暂无笔记'}
+            </span>
           </div>
         </div>
       </div>

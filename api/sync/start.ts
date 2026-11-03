@@ -8,7 +8,8 @@ import { prepareSync, syncStats } from "../_lib/sync.js";
  * POST /api/sync/start
  *
  * 建任务：拉书目 → 算变化集 → 落库 → 返回 task_id。
- * 这一步只花 2 次外部请求（notebooks + overall），必然在函数时限内完成。
+ * 书目有两个来源：notebooks（有笔记的书）+ shelf（书架，覆盖「在读但零笔记」的书）。
+ * 这一步固定 3 次外部请求（notebooks + shelf + overall），必然在函数时限内完成。
  * 真正的逐本详拉交给 /api/sync/batch 分批处理，前端轮询进度。
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {

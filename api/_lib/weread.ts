@@ -72,6 +72,28 @@ export type NotebookBook = {
   sort?: number;
 };
 
+/**
+ * 书架条目（/shelf/sync）。
+ * 与 notebooks 的区别：这里没有笔记计数，但有「最后阅读时间」readUpdateTime，
+ * 而且包含「在读但一条笔记都没有」的书 —— 这正是它存在的意义。
+ */
+export type ShelfBook = {
+  bookId: string;
+  title?: string;
+  author?: string;
+  cover?: string;
+  /** 扁平分类，如 "经济理财-理财"（notebooks 里是 categories 数组） */
+  category?: string;
+  /** 0 在读 / 1 已读完 */
+  finishReading?: number;
+  /** 最后阅读时间（unix 秒） */
+  readUpdateTime?: number;
+  /** 加入书架时间（unix 秒） */
+  updateTime?: number;
+  deepLink?: string;
+  readerLink?: string;
+};
+
 export type Chapter = { chapterUid?: number; chapterIdx?: number; title?: string };
 
 export type RawHighlight = {
@@ -141,6 +163,21 @@ export async function listNotebooks(): Promise<NotebooksResult> {
   }
 
   return { books, totalBookCount, totalNoteCount };
+}
+
+/**
+ * 拉取「书架上的书」，按最近阅读倒序（接口本身即按 readUpdateTime 排序）。
+ *
+ * 为什么要它：/user/notebooks 只返回"有笔记的书"，
+ * 于是「最近在读、但还没划线/写想法」的书根本不会出现在同步结果里，
+ * 用户会以为同步漏了书。书架接口是唯一能覆盖到这类书的来源。
+ *
+ * limit 是防御：书架可能有几百本，逐本详拉成本高，只同步最近阅读的这批。
+ */
+export async function listShelf(limit = 100): Promise<ShelfBook[]> {
+  const r = await call<Json>({ api_name: "/shelf/sync" });
+  const books = (r.books ?? []) as ShelfBook[];
+  return books.filter((b) => b?.bookId).slice(0, limit);
 }
 
 /** 单本的划线 + 章节表（划线接口同时带回 chapters，用来补章节标题） */
