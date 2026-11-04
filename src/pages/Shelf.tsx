@@ -85,10 +85,15 @@ export default function Shelf({ books, highlights, reviews }: Props) {
         group: groupCategory(book.category),
       }))
       .sort((a, b) => {
+        // 最近阅读优先：updated_at 是每次同步确认到「这本书有阅读/笔记动静」的时间，
+        // 同步发生在阅读之后，拿它当排序键足够准（无笔记的书也覆盖到）。
+        const ta = Date.parse(a.book.updated_at ?? '') || 0
+        const tb = Date.parse(b.book.updated_at ?? '') || 0
+        if (tb !== ta) return tb - ta
+        // 同一批同步进来的书再按笔记数排，有内容的更靠前
         const na = a.marks.length + a.thoughts.length
         const nb = b.marks.length + b.thoughts.length
-        if (nb !== na) return nb - na
-        return Number(b.book.last_note_time ?? 0) - Number(a.book.last_note_time ?? 0)
+        return nb - na
       })
   }, [books, highlights, reviews])
 
@@ -118,13 +123,14 @@ export default function Shelf({ books, highlights, reviews }: Props) {
     { value: groupNumber(totalThoughts), label: '想法总数', tw: 'text-brand-purple' },
   ]
 
-  // 「在读」卡片：优先取没读完且最近有笔记的一本，用它打破均质网格
+  // 「在读」卡片：优先取没读完、且最近一次同步确认有阅读动静的一本
+  // （口径与列表排序一致，见 items 里的注释），用它打破均质网格
   const focus = useMemo(() => {
     const reading = list.filter((i) => Number(i.book.reading_progress ?? 0) < 100)
     const pool = reading.length ? reading : list
     return [...pool].sort((a, b) => {
-      const ta = Number(a.book.last_note_time ?? 0)
-      const tb = Number(b.book.last_note_time ?? 0)
+      const ta = Date.parse(a.book.updated_at ?? '') || 0
+      const tb = Date.parse(b.book.updated_at ?? '') || 0
       return tb - ta
     })[0]
   }, [list])
